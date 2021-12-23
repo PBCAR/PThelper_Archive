@@ -119,13 +119,17 @@ elasticity_curve <- function(pt, id_var, k_span = c(2,3,4), eq_type = "koff", ag
   zero_id <- pt_results[zero_val,]$id
 
   # IDENTIFY IDs who had a 0 value in one or both of their first 2 responses
-  if(length(zero_id)==0) (zero_id <- "NULL")
-
-  cat(" IDs with a zero consumption value in the first and/ or second price: ", zero_id,sep=" ","\n")
 
   if(length(zero_id>0)){
     pt_results[(pt_results$id %in% zero_id),][,c("Q0_derived","Omax_derived","Pmax_derived","Elasticity","Omax","Pmax")] <- NA
-  }
+
+    cat(" IDs with a zero consumption value in the first and/ or second price: ", zero_id,sep=" ","\n")
+
+  } else if(length(zero_id)==0) {
+
+    cat(" IDs with a zero consumption value in the first and/ or second price: NULL \n")
+
+    }
 
   ##### ----- ELASTICITY CURVE OF SAMPLE
 
@@ -183,6 +187,9 @@ elasticity_curve <- function(pt, id_var, k_span = c(2,3,4), eq_type = "koff", ag
 
   ##### ----- ELASTICITY CURVE OF EACH ID
   if(id_curve==TRUE) {
+
+    pt_long$remove <- ifelse(pt_long$id %in% zero_id,"remove","keep")
+    pt_long <- pt_long[(pt_long$remove=="keep"),]
 
     part.curve2 <- beezdemand::FitCurves(dat = pt_long, equation = eq_type, k = k.value.final, agg = NULL, detailed = T)
 
@@ -284,8 +291,10 @@ elasticity_curve <- function(pt, id_var, k_span = c(2,3,4), eq_type = "koff", ag
     print(id_curve_plot)
     graphics::par(ask=F)
 
-  }
+  } else if(id_curve==FALSE) {
 
+    print(mean_curve_plot)
+  }
   names(pt_results)[names(pt_results) == "id"] <- id_var
 
   return(pt_results)
