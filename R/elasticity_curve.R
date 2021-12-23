@@ -21,8 +21,8 @@ utils::globalVariables(c("Elasticity","Q0_derived","Omax_derived","Pmax_derived"
 #' those sensitive to price increases (i.e. show more elasticity) highlighted. Specifically,
 #' highlighted individuals are those greater than 3 standard deviations away from the mean (z-score > 3).
 #' @param id_label If set to TRUE, the ID labels of those identified as sensitive to price increases
-#' are labelled on the plot. If FALSE, then the ID labels are provided as a print out in the console.
-#' By default,id_label is set to TRUE.
+#' are labelled on the plot, and their curves are highlighted. If FALSE, then the ID labels are provided
+#' as a print out in the console. By default, id_label is set to TRUE.
 #' @examples
 #' \dontrun{
 #' ## Basic calculation of elasticity curve and derived values using default settings
@@ -161,7 +161,7 @@ elasticity_curve <- function(pt, id_var, k_span = c(2,3,4), eq_type = "koff", ag
   }
 
   # MEAN CURVE PLOT
-  mean_curve_plot <- ggplot2::ggplot(point_dat, ggplot2::aes(x=x,y=y)) +
+  mean_curve_plot <- ggplot2::ggplot(point_dat, ggplot2::aes(x = x,y = y)) +
     ggplot2::geom_line(est_dat, mapping = ggplot2::aes(x = x, y = y), colour = "#999999", size = 1.5) +
     ggplot2::geom_segment(dat_pt, mapping = ggplot2::aes(x = x1, y = min(point_dat$y),
                                                          xend = x2, yend = y2), show.legend = F, size = 0.75, linetype = "dashed") +
@@ -203,38 +203,45 @@ elasticity_curve <- function(pt, id_var, k_span = c(2,3,4), eq_type = "koff", ag
     }
 
     id_est_dat <- do.call(rbind.data.frame, part.curve2$newdats)
+    id_point_dat <- do.call(rbind.data.frame,part.curve2$adfs)
 
     if(min(prices)==0) {
+      id_point_dat$x[id_point_dat$x==0] <- 0.0001
       id_est_dat$x[id_est_dat$x==0] <- 0.0001
     }
 
-    # Those more sensitive to price (i.e. those with greater elasticity) are
-    # highlighted, as defined as 3+ standard deviations away from the mean.
-
-    id_dat_pt$z_alpha <- abs(scale(id_dat_pt$Alpha))
-
-    # IDENTIFY those more sensitive to price:
-    id_alpha_sens <- id_dat_pt$id[id_dat_pt$z_alpha>3]
-
-    id_est_dat$id <- rownames(id_est_dat)
-    id_est_dat$id <- strsplit(id_est_dat$id,".", fixed = T)
-    id_est_dat$id <- lapply(id_est_dat$id, `[`, 1)
-    id_est_dat$id <- as.character(id_est_dat$id)
-
-    id_est_dat$alpha_sens <- ifelse(id_est_dat$id %in% id_alpha_sens, "highlight", "none")
-
-    alpha_sens_labels_x <- stats::aggregate(id_est_dat$x[id_est_dat$alpha_sens=="highlight"], by = list(id_est_dat$id[id_est_dat$alpha_sens=="highlight"]), FUN = max)
-    names(alpha_sens_labels_x)[names(alpha_sens_labels_x)=="Group.1"] <- "id"
-
-    alpha_sens_labels_y <- stats::aggregate(id_est_dat$y[id_est_dat$alpha_sens=="highlight"], by = list(id_est_dat$id[id_est_dat$alpha_sens=="highlight"]), FUN = min)
-    names(alpha_sens_labels_y)[names(alpha_sens_labels_y)=="Group.1"] <- "id"
-    names(alpha_sens_labels_y)[names(alpha_sens_labels_y)=="x"] <- "y"
-
-    alpha_sens_labels <- merge(alpha_sens_labels_x, alpha_sens_labels_y, by = "id")
-    alpha_sens_labels$alpha_sens <- "highlight"
-
     # ID_CURVE PLOT
-    if(id_label==TRUE) {
+
+
+      # Those more sensitive to price (i.e. those with greater elasticity) are
+      # highlighted, as defined as 3+ standard deviations away from the mean.
+
+      id_dat_pt$z_alpha <- abs(scale(id_dat_pt$Alpha))
+
+      # IDENTIFY those more sensitive to price:
+      id_alpha_sens <- id_dat_pt$id[id_dat_pt$z_alpha>3]
+
+      id_est_dat$id <- rownames(id_est_dat)
+      id_est_dat$id <- strsplit(id_est_dat$id,".", fixed = T)
+      id_est_dat$id <- lapply(id_est_dat$id, `[`, 1)
+      id_est_dat$id <- as.character(id_est_dat$id)
+
+      id_est_dat$alpha_sens <- ifelse(id_est_dat$id %in% id_alpha_sens, "highlight", "none")
+
+      alpha_sens_labels_x <- stats::aggregate(id_est_dat$x[id_est_dat$alpha_sens=="highlight"], by = list(id_est_dat$id[id_est_dat$alpha_sens=="highlight"]), FUN = max)
+      names(alpha_sens_labels_x)[names(alpha_sens_labels_x)=="Group.1"] <- "id"
+
+      alpha_sens_labels_y <- stats::aggregate(id_est_dat$y[id_est_dat$alpha_sens=="highlight"], by = list(id_est_dat$id[id_est_dat$alpha_sens=="highlight"]), FUN = min)
+      names(alpha_sens_labels_y)[names(alpha_sens_labels_y)=="Group.1"] <- "id"
+      names(alpha_sens_labels_y)[names(alpha_sens_labels_y)=="x"] <- "y"
+
+      alpha_sens_labels <- merge(alpha_sens_labels_x, alpha_sens_labels_y, by = "id")
+      alpha_sens_labels$alpha_sens <- "highlight"
+
+      cat(" IDs with extreme price sensitivity (Elasticity values > z-score of 3): ", id_alpha_sens, "\n")
+
+      if(id_label==TRUE) {
+
     id_curve_plot <- ggplot2::ggplot(id_est_dat, ggplot2::aes(x = x, y = y)) +
       ggplot2::geom_line(id_est_dat[(id_est_dat$alpha_sens=="none"),],
                          mapping = ggplot2::aes(x = x, y = y, group = id, colour = alpha_sens),show.legend = F) +
@@ -251,7 +258,7 @@ elasticity_curve <- function(pt, id_var, k_span = c(2,3,4), eq_type = "koff", ag
       ggplot2::scale_y_log10(breaks = c(0.01, 0.1, 1, 10, 100, 1000, 10000, 100000),
                              labels = c(0.01, 0.1, 1, 10, 100, 1000, 10000, 100000)) +
       ggplot2::theme_classic() + ggplot2::xlab("Price (Log)") + ggplot2::ylab("Consumption (Log)") +
-      ggplot2::labs(title = paste0(agg_type," Aggregate Demand Curve & Derived Values"),
+      ggplot2::labs(title = paste0("Individual Elasticity Curves"),
                     subtitle = "Labelled IDs with Elasticity z-scores > 3") +
       ggplot2::theme(plot.title = ggplot2::element_text(size = 20, face = "bold"),
                      plot.subtitle = ggplot2::element_text(size = 15, face = "italic"),
@@ -259,31 +266,25 @@ elasticity_curve <- function(pt, id_var, k_span = c(2,3,4), eq_type = "koff", ag
                      axis.text = ggplot2::element_text(size = 13),
                      axis.line = ggplot2::element_line(colour = "black", size = 1))
 
+
     } else if(id_label==FALSE) {
 
-      cat(" IDs with extreme price sensitivity (Elasticity values > z-score of 3): ", id_alpha_sens, "\n")
-
       id_curve_plot <- ggplot2::ggplot(id_est_dat, ggplot2::aes(x = x, y = y)) +
-        ggplot2::geom_line(id_est_dat[(id_est_dat$alpha_sens=="none"),],
-                           mapping = ggplot2::aes(x = x, y = y, group = id, colour = alpha_sens),show.legend = F) +
-        ggplot2::geom_line(id_est_dat[(id_est_dat$alpha_sens=="highlight"),],
-                           mapping = ggplot2::aes(x = x, y = y, group = id, colour = alpha_sens), show.legend = F) +
-        ggplot2::scale_colour_manual(values = c("#000000","#BEBEBE")) +
+        ggplot2::geom_line(id_est_dat, mapping = ggplot2::aes(x = x, y = y, group = id), alpha = 0.5, colour = "#999999", show.legend = F) +
         ggplot2::scale_x_log10(breaks = c(0.0001, 0.01, 0.1, 1, 10, 100, 1000, 10000, 100000),
                                labels = c(paste0(min(prices)), 0.01, 0.1, 1, 10, 100, 1000, 10000, 100000),
                                expand = c(0.01,0.01,0.01,0.01)) +
         ggplot2::scale_y_log10(breaks = c(0.01, 0.1, 1, 10, 100, 1000, 10000, 100000),
                                labels = c(0.01, 0.1, 1, 10, 100, 1000, 10000, 100000)) +
         ggplot2::theme_classic() + ggplot2::xlab("Price (Log)") + ggplot2::ylab("Consumption (Log)") +
-        ggplot2::labs(title = paste0(agg_type," Aggregate Demand Curve & Derived Values"),
-                      subtitle = "Highlighted Curves with Elasticity z-scores > 3") +
+        ggplot2::labs(title = paste0("Individual Elasticity Curves")) +
         ggplot2::theme(plot.title = ggplot2::element_text(size = 20, face = "bold"),
                        plot.subtitle = ggplot2::element_text(size = 15, face = "italic"),
                        axis.title = ggplot2::element_text(size = 15, face = "bold"),
                        axis.text = ggplot2::element_text(size = 13),
                        axis.line = ggplot2::element_line(colour = "black", size = 1))
-
     }
+
 
     graphics::par(ask=F)
     print(mean_curve_plot)
@@ -294,6 +295,7 @@ elasticity_curve <- function(pt, id_var, k_span = c(2,3,4), eq_type = "koff", ag
   } else if(id_curve==FALSE) {
 
     print(mean_curve_plot)
+
   }
   names(pt_results)[names(pt_results) == "id"] <- id_var
 
