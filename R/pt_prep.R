@@ -43,7 +43,7 @@ pt_prep <- function(pt, id_var, max_val = NULL) {
       }
     }
 
-    pt2 <- pt[!pt[,"id"] %in% missing.id,]
+    pt2 <- pt[!(pt$id %in% missing.id),]
 
     ### FUNCTION WITHOUT MAX VALUE
   } else if(is.null(max_val)){
@@ -63,7 +63,7 @@ pt_prep <- function(pt, id_var, max_val = NULL) {
       }
     }
 
-    pt2 <- pt[!pt[,"id"] %in% missing.id,]
+    pt2 <- pt[!(pt$id %in% missing.id),]
   }
 
   if(length(missing.id)!=0){

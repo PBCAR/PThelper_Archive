@@ -33,8 +33,8 @@ those sensitive to price increases (i.e. show more elasticity) highlighted. Spec
 highlighted individuals are those greater than 3 standard deviations away from the mean (z-score > 3).}
 
 \item{id_label}{If set to TRUE, the ID labels of those identified as sensitive to price increases
-are labelled on the plot. If FALSE, then the ID labels are provided as a print out in the console.
-By default,id_label is set to TRUE.}
+are labelled on the plot, and their curves are highlighted. If FALSE, then the ID labels are provided
+as a print out in the console. By default, id_label is set to TRUE.}
 }
 \description{
 Models the elasticity curve, and calculates other values of interest such as

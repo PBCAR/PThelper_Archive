@@ -4,7 +4,7 @@
 \alias{pt_prep}
 \title{PT PREP}
 \usage{
-pt_prep(pt, id_var, max_val)
+pt_prep(pt, id_var, max_val = NULL)
 }
 \arguments{
 \item{pt}{A data frame consisting of the `id_var` and purchase task variables.}

@@ -72,8 +72,8 @@ elasticity_curve <- function(pt, id_var, k_span = c(2,3,4), eq_type = "koff", ag
   part.curve <- beezdemand::FitCurves(dat = pt_long, equation = eq_type,
                                       k = k.value.final, agg = NULL)
 
-  spec.curve <- part.curve[,c("id","Q0d","K","Alpha","R2","Omaxd","Pmaxd","Notes")]
-  colnames(spec.curve) <- c("id","Q0_derived","k","Elasticity","R2","Omax_derived","Pmax_derived","Notes")
+  spec.curve <- part.curve[,c("id","Q0d","K","Alpha","R2","Omaxd","Pmaxd")]
+  colnames(spec.curve) <- c("id","Q0_derived","k","Elasticity","R2","Omax_derived","Pmax_derived")
 
   pt_results <- merge(pt_empirical, spec.curve, by = "id", all = T)
   pt_results <- pt_results[order(pt_results$id),]
@@ -110,7 +110,7 @@ elasticity_curve <- function(pt, id_var, k_span = c(2,3,4), eq_type = "koff", ag
 
   pt_results <- merge(pt, pt_results, by = "id")
   pt_results <- pt_results[,c("id",prices,"Q0_derived", "R2", "Omax_derived", "Pmax_derived",
-                              "Breakpoint","Elasticity","Intensity","Omax","Pmax","Notes")]
+                              "Breakpoint","Elasticity","Intensity","Omax","Pmax")]
 
   cat(" Selected k-value: ", k.value.final, "\n")
   cat(" IDs with changes to Breakpoint: ", one.rev.list, "\n")
