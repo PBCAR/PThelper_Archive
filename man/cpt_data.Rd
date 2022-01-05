@@ -5,7 +5,7 @@
 \alias{cpt_data}
 \title{CPT_DATA}
 \format{
-An object of class \code{spec_tbl_df} (inherits from \code{tbl_df}, \code{tbl}, \code{data.frame}) with 50 rows and 16 columns.
+An object of class \code{data.frame} with 100 rows and 16 columns.
 }
 \usage{
 data(cpt_data)
@@ -20,8 +20,8 @@ c("0","0.05","0.10","0.20","0.30","0.40","0.50", "0.75","1","2","3","4","5","7.5
 In this example, the items are administered to participants in arrays of 3. A zero consumption response
 within an array will end the instrument after the final item within the array.
 
-There are N = 50 participants included in the sample data set, as identified by the unique identifier 'ID'.
-Most of these participants have CPT data (n = 44), and most are smokers (n = 41).
+There are N = 100 participants included in the sample data set, as identified by the unique identifier 'ID'.
+Most of these participants have CPT data (n = 92), and most are smokers (n = 87).
 }
 \examples{
 \dontrun{

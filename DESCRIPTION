@@ -8,7 +8,7 @@ Authors@R: c(person("Kyla","Belisario", role = c("aut", "cre", "trl"), email = "
     person("James","MacKillop", role = c("aut"), comment = c(ORCID = "0000-0002-8695-1071")))
 Description: This package introduces a series of steps needed to clean and process purchase task data. The PThelper package consists of 8 different functions to walk users through 3 different stages of purchase task processing: i) The pre-processing stage of the raw data; ii) The calculation of elasticity and derived indices stage via curve-fitting; and iii) The index-level purchase task variable management.
 License: MIT + file LICENSE
-Imports: utils, stats, psych, beezdemand, ggplot2, DT, knitr, ggrepel
+Imports: utils, stats, psych, beezdemand, ggplot2, ggrepel, ggforce, DT, knitr
 Encoding: UTF-8
 LazyData: true
 RoxygenNote: 7.1.1

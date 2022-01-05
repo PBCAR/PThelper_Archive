@@ -8,8 +8,9 @@
 #' In this example, the items are administered to participants in arrays of 3. A zero consumption response
 #' within an array will end the instrument after the final item within the array.
 #'
-#' There are N = 50 participants included in the sample data set, as identified by the unique identifier 'ID'.
-#' Most of these participants have CPT data (n = 44), and most are smokers (n = 41).
+#' There are N = 100 participants included in the sample data set, as identified by the unique identifier 'ID'.
+#' Most of these participants have CPT data (n = 92), and most are smokers (n = 87).
+#'
 #' @docType data
 #' @usage data(cpt_data)
 #' @examples
