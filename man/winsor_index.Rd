@@ -4,18 +4,33 @@
 \alias{winsor_index}
 \title{WINSOR INDEX}
 \usage{
-winsor_index(pt, index_var, z_val = 3.99, type = "option3", delta = 0.001)
+winsor_index(
+  pt,
+  id_var,
+  index_var,
+  z_val = 3.99,
+  type = "option3",
+  delta = 0.001,
+  table = F
+)
 }
 \arguments{
 \item{pt}{A data frame consisting of the `id_var` and purchase task variables.}
+
+\item{id_var}{The name of the unique identifier (ID) as identified in the data frame.}
 
 \item{index_var}{The name of the index variable to winsorize.}
 
 \item{z_val}{The absolute z-value to define outliers.}
 
-\item{type}{Type of winsorization, specifically one of: c("option1","option2","option3")}
+\item{type}{Type of winsorization, specifically one of: c("option1","option2","option3"). The default
+outlier management technique is "option3".}
 
-\item{delta}{used to retain winsorization order when using winsorization type "option3"}
+\item{delta}{Used to retain winsorization order when using winsorization type "option3". The
+default is 0.001.}
+
+\item{table}{If set to TRUE, an html table is provided, which is especially helpful for large data
+sets. The default is FALSE, and a table in the console will be printed.}
 }
 \description{
 This function helps users to manage outliers in the purchase task variables through
@@ -28,6 +43,6 @@ non-outlying value to maintain order.
 }
 \examples{
 \dontrun{
-pt2 <- winsor_index(pt, index_var = "Intensity", type = "option3")
+pt2 <- winsor_index(pt, id_var = "ID", index_var = "Intensity", type = "option3")
 }
 }

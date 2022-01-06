@@ -11,6 +11,7 @@
 #' @param pt A data frame consisting of the `id_var` and purchase task variables.
 #' @param id_var The name of the unique identifier (ID) as identified in the data frame.
 #' @param type The type of outlier management via winsorization. One of c("option1","option2","option3").
+#' The default outlier management technique is "option3".
 #' @param z_val The absolute z-value to identify outlying responses above/ below the negative z-score.
 #' @param table If set to TRUE, an html table is provided, which is especially helpful for large data
 #' sets. The default is FALSE, and a table in the console will be printed.
@@ -20,7 +21,7 @@
 #' }
 #' @export
 
-winsor_price <- function(pt, id_var, type, z_val = 3.99, table = FALSE) {
+winsor_price <- function(pt, id_var, type = "option3", z_val = 3.99, table = FALSE) {
 
   pt_names <- names(pt)
   prices <- pt_names[pt_names!=id_var]
@@ -112,7 +113,7 @@ winsor_price <- function(pt, id_var, type, z_val = 3.99, table = FALSE) {
   )
 
   if(table==FALSE)(
-    print(knitr::kable(pt_winsor))
+    print(knitr::kable(pt_winsor, row.names = F))
   )
 
   return(pt2)

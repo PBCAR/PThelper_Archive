@@ -9,17 +9,26 @@
 #' non-outlying value to maintain order.
 #'
 #' @param pt A data frame consisting of the `id_var` and purchase task variables.
+#' @param id_var The name of the unique identifier (ID) as identified in the data frame.
 #' @param index_var The name of the index variable to winsorize.
 #' @param z_val The absolute z-value to define outliers.
-#' @param type Type of winsorization, specifically one of: c("option1","option2","option3")
-#' @param delta used to retain winsorization order when using winsorization type "option3"
+#' @param type Type of winsorization, specifically one of: c("option1","option2","option3"). The default
+#' outlier management technique is "option3".
+#' @param delta Used to retain winsorization order when using winsorization type "option3". The
+#' default is 0.001.
+#' @param table If set to TRUE, an html table is provided, which is especially helpful for large data
+#' sets. The default is FALSE, and a table in the console will be printed.
 #' @examples
 #' \dontrun{
-#' pt2 <- winsor_index(pt, index_var = "Intensity", type = "option3")
+#' pt2 <- winsor_index(pt, id_var = "ID", index_var = "Intensity", type = "option3")
 #' }
 #' @export
 
-winsor_index <- function(pt, index_var, z_val = 3.99, type = "option3", delta = 0.001) {
+winsor_index <- function(pt, id_var, index_var, z_val = 3.99, type = "option3", delta = 0.001, table = F) {
+
+  pt_names <- names(pt)
+  prices <- pt_names[pt_names!=id_var]
+  names(pt)[names(pt) == id_var] <- "id"
 
   pt2 <- pt[!is.na(pt[,c(index_var)]),]
   z_pt <- scale(pt2[,c(index_var)], center = TRUE, scale = TRUE)
@@ -70,9 +79,30 @@ winsor_index <- function(pt, index_var, z_val = 3.99, type = "option3", delta = 
       }
     }
   }
+
+
+  # IDENTIFY IDs with winsorization changes
+  index_winsor <- merge(pt[c("id",index_var)],pt2[c("id",index_var)], by = "id", all.x = T)
+  colnames(index_winsor) <- c(id_var,"Old","New")
+
+  index_winsor <- index_winsor[!is.na(index_winsor$Old),]
+  index_winsor <- index_winsor[(index_winsor$Old != index_winsor$New),]
+
+  colnames(index_winsor) <- c(id_var,paste0("Old ",index_var),paste0("New ", index_var))
+
+  names(pt2)[names(pt2) == "id"] <- id_var
+
   pt_out <- pt2[,c(index_var)]
   pt[,c(index_var)] <- replace(pt[,c(index_var)], !is.na(pt[,c(index_var)]), pt_out)
+
+  if(table==TRUE) (
+    print(DT::datatable(index_winsor, options = list(pageLength = 10, columnDefs = list(list(className = 'dt-center', targets = "_all"))), rownames = F, fillContainer = F))
+  )
+
+  if(table==FALSE)(
+    print(knitr::kable(index_winsor, row.names = F))
+  )
+
   return(pt)
 
 }
-

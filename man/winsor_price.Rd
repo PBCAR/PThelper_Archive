@@ -4,14 +4,15 @@
 \alias{winsor_price}
 \title{WINSOR PRICE}
 \usage{
-winsor_price(pt, id_var, type, z_val = 3.99, table = FALSE)
+winsor_price(pt, id_var, type = "option3", z_val = 3.99, table = FALSE)
 }
 \arguments{
 \item{pt}{A data frame consisting of the `id_var` and purchase task variables.}
 
 \item{id_var}{The name of the unique identifier (ID) as identified in the data frame.}
 
-\item{type}{The type of outlier management via winsorization. One of c("option1","option2","option3").}
+\item{type}{The type of outlier management via winsorization. One of c("option1","option2","option3").
+The default outlier management technique is "option3".}
 
 \item{z_val}{The absolute z-value to identify outlying responses above/ below the negative z-score.}
 
