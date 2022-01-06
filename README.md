@@ -205,7 +205,7 @@ plot_summary(PT3, id_var = "ID")
 
 The visualization is printed to the 'Plots' pane:
 
-![](images/plot_summary.png)
+![](examples/plot_summary.png)
 
 ## ii) Calculating Elasticity and Derived Values:
 
@@ -225,7 +225,7 @@ IDs with a zero consumption value in the first and/ or second price:  10_A 15_A 
 
 An overall curve of the entire sample is provided with this function, which is printed to the 'Plots' pane:
 
-![](images/elasticity_overall_curve.png)
+![](examples/elasticity_overall_curve.png)
 
 
 #### If `id_curve` is set to TRUE:
@@ -245,7 +245,7 @@ IDs with extreme price sensitivity (Elasticity values > z-score of 3):  25_B 32_
 
 The console printout will also prompt the user to "Hit \<Return> to see next plot:", which will allow them to see the individual elasticity curves plot after the overall sample curve is printed to the 'Plots' pane:
 
-![](images/elasticity_individual_curves.png)
+![](examples/elasticity_individual_curves.png)
 
 ## iii) Final Processing of Purchase Task Indices:
 
@@ -275,7 +275,7 @@ plot_transform(PT6, pt_var = "Intensity")
 
 The visualization is printed to the 'Plots' pane:
 
-![](images/plot_transform.png)
+![](examples/plot_transform.png)
 
 ## References
 
