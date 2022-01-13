@@ -12,7 +12,7 @@ iii)  The index-level variable management
 
 This package makes use of the wonderful package for processing Behavioral Economic Data by Brent Kaplan (2018) called {[beezdemand](https://github.com/brentkaplan/beezdemand)}. It also makes use of several other packages, including the powerful {ggplot2} for all visualization purposes.
 
-Example Cigarette Purchase Task (CPT) data are provided by this package. Examples using each function on this data set (`cpt_data`) are demonstrated in detail below.
+Example Cigarette Purchase Task (CPT) data (`cpt_data`) are provided by this package. Examples using each function on this data set are demonstrated in detail below.
 
 ## Installation
 
@@ -101,7 +101,7 @@ The fit of the elasticity curve by the `elasticity_curve()` function is done usi
 
 #### c) Curve Visualization:
 
-The overall sample curve is visualized, with the option to visualize each individual curve on the same plot (known as a spaghetti plot), identifying those with extreme sensitivity to price (i.e. high elasticity values; \> a z-score of 3). Note that the individual curves visualization can take time to render, especially with large data sets.
+The overall sample curve is visualized, with the option to visualize each individual curve on the same plot (known as a spaghetti plot), identifying those with extreme sensitivity to price (i.e. high elasticity values; \> a z-score of 3). *NOTE:* The individual curves visualization can take time to render, especially with large data sets.
 
 ## iii) Final Processing of Purchase Task Indicators:
 
@@ -115,7 +115,9 @@ i)  Option 1 replaces outliers with the maximum non-outlying value rounded up;
 
 ii) Option 2 replaces outliers with a value 1 unit higher than highest (or 1 unit lower than the lowest) non-outlying value; and
 
-iii) Option 3 replaces outliers with a value 1 unit above the next highest non-outlying value to maintain order. *NOTE:* This unit is user-defined via the `delta` argument, with a default value of 0.001.
+iii) Option 3 replaces outliers with a value 1 unit above the next highest non-outlying value to maintain order.
+
+*NOTE:* The unit in Option 3 is user-defined via the `delta` argument, with a default value of 0.001.
 
 As with outlier management of the price-level data, the default z-value used to identify outlying values is 3.99, and the default winsorization type is 'option3'.
 
@@ -270,7 +272,7 @@ Changes made to the chosen indicator variable are identified by ID in the consol
 
 #### The `plot_transform()` Function:
 
-The `plot_transform()` function provides summary statistics as well as a visualization of distribution of the original variable, alongside two transformations (log10 and square root):
+This function provides summary statistics as well as a visualization of distribution of the original variable, alongside two transformations (log10 and square root):
 ```
 plot_transform(PT6, pt_var = "Intensity")
 ```
