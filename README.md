@@ -1,12 +1,12 @@
 # The {PThelper} Package
 
-This package is designed to walk users through the various steps required to clean and process purchase task data. Designed with non-R users in mind, the package focuses on familiarizing users on both the raw and processed data.
+This package is designed to walk users through the various steps required to clean and process purchase task data. The benefit of this package is that it provides a standardized framework for processing purchase task data which lends itself to increased reproducibility.
 
-The {PThelper} package offers 8 different functions to walk users through 3 different stages of purchase task processing:
+The {PThelper} package offers 8 different functions for the 3 different stages of purchase task processing:
 
 i)  The pre-processing stage of the raw data;
 
-ii)  The calculation of elasticity and derived indices stage via curve-fitting; and
+ii)  The calculation of elasticity and derived indicators stage via curve-fitting; and
 
 iii)  The index-level variable management
 
@@ -25,7 +25,7 @@ devtools::install_github("PBCAR/PThelper")
 
 ## Introduction to Purchase Tasks
 
-These demand instruments are used to measure the reinforcer pathology - the extent to which a value for a commodity is effected by increased cost. Greater demand (i.e. little sensitivity to changes in price) is often associated with substance-related problems and use disorders (see Bickel et al., 2011). The 5 most commonly used indices generated from the purchase task are:
+These demand instruments are used to measure the reinforcer pathology - the extent to which a value for a commodity is effected by increased cost. Greater demand (i.e. little sensitivity to changes in price) is often associated with substance-related problems and use disorders (see Bickel et al., 2011). The 5 most commonly used indicators generated from the purchase task are:
 
 Breakpoint -- The first increment of cost with zero consumption
 
@@ -39,7 +39,7 @@ Elasticity -- Measures sensitivity of consumption to increases in cost
 
 ## i) Pre-Processing
 
-Purchase task processing requires preparation, and using the `price_prep()`, `pt_prep()`, and `pt_qc()` functions will ensure the proper cleaning of the data prior calculating the purchase task indices.
+Purchase task processing requires preparation, and using the `price_prep()`, `pt_prep()`, and `pt_qc()` functions will ensure the proper cleaning of the data prior calculating the purchase task indicators.
 
 The `plot_summary()` function can also be used at the end of the pre-processing stage to visualize the consumption and expenditure across the prices of the purchase task, prior to any outlier management.
 
@@ -89,7 +89,7 @@ The default z-value used to identify outlying values is 3.99, and the default wi
 
 To calculate elasticity, a non-linear curve is fit to the price-level data using the {PThelper} function `elasticity_curve()`. This function will also provide a diagnostic overview of the sample data curve, as well as individual curves if requested by the user.
 
-#### a) Empircal Purchase Task Indices:
+#### a) Empircal Purchase Task Indicators:
 
 In this step of calculating derived values by fitting a non-linear curve to the data using the `elasticity_curve()` function, the empirical values for Intensity, Breakpoint, Omax, and Pmax are also processed and retained automatically in this stage.
 
@@ -101,7 +101,7 @@ The fit of the elasticity curve by the `elasticity_curve()` function is done usi
 
 The overall sample curve is visualized, with the option to visualize each individual curve on the same plot (known as a spaghetti plot), identifying those with extreme sensitivity to price (i.e. high elasticity values \> a z-score of 3). Note that the individual curves visualization can take time to render, especially with large data sets.
 
-## iii) Final Processing of Purchase Task Indices:
+## iii) Final Processing of Purchase Task Indicators:
 
 Additional optional processing are available by using the `winsor_index()` and `plot_transform()` functions. These aide with outlier management and management of distributional shape of the index-level purchase task variables.
 
@@ -119,7 +119,7 @@ As with outlier management of the price-level data, the default z-value used to 
 
 #### b) Transformation of Purchase Task Variables (Optional):
 
-Optional transformation of index-level variables using the `plot_transform()` function, aides in diagnosing the best transformation to achieve an approximately normal distribution. This function uses the two most common transformations for purchase task indices, specifically log (log of base 10) and square root due to the distribution often being right-skewed (positively-skewed).
+Optional transformation of index-level variables using the `plot_transform()` function, aides in diagnosing the best transformation to achieve an approximately normal distribution. This function uses the two most common transformations for purchase task indicators, specifically log (log of base 10) and square root due to the distribution often being right-skewed (positively-skewed).
 
 ## Example Data (CPT)
 
@@ -156,7 +156,7 @@ PT2 <- pt_prep(PT, id_var = "ID")
 Those who exit the assessment with a non-zero response will be considered missing alongside those with true missing data on all items, and their IDs will be printed to the console:
 
 ```
-IDs with Missing Values:: 11_A 19_A 22_B 24_B 28_A 30_B 36_A 43_B 46_B 49_A 53_A 66_B 73_B 74_A
+IDs with Missing Values: 11_A 19_A 22_B 24_B 28_A 30_B 36_A 43_B 46_B 49_A 53_A 66_B 73_B 74_A
 ```
 
 #### The `pt_qc()` Function:
@@ -247,7 +247,7 @@ The console printout will also prompt the user to "Hit \<Return> to see next plo
 
 ![](examples/elasticity_individual_curves.png)
 
-## iii) Final Processing of Purchase Task Indices:
+## iii) Final Processing of Purchase Task Indicators:
 
 #### The `winsor_index()` Function:
 
