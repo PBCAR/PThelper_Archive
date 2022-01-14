@@ -1,3 +1,5 @@
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.5847711.svg)](https://doi.org/10.5281/zenodo.5847711)
+
 # The {PThelper} Package
 
 This package is designed to walk users through the various steps required to clean and process purchase task data. The benefit of this package is that it provides a standardized framework for processing purchase task data, improving reproducibility.
