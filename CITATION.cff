@@ -13,4 +13,6 @@ authors:
   given-names: "James"
   orcid: "https://orcid.org/0000-0002-8695-1071"
 title: "The Systematic Cleaning and Processing of Purchase Task Data: An R Statistical Package"
-year: "2022"
+version: 1.0.0
+doi: 10.5281/zenodo.5847711
+date-released: 2021-01-13
