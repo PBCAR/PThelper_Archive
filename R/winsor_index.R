@@ -90,10 +90,10 @@ winsor_index <- function(pt, id_var, index_var, z_val = 3.99, type = "option3", 
 
   colnames(index_winsor) <- c(id_var,paste0("Old ",index_var),paste0("New ", index_var))
 
-  names(pt2)[names(pt2) == "id"] <- id_var
-
   pt_out <- pt2[,c(index_var)]
   pt[,c(index_var)] <- replace(pt[,c(index_var)], !is.na(pt[,c(index_var)]), pt_out)
+  
+  names(pt)[names(pt) == "id"] <- id_var
 
   if(table==TRUE) (
     print(DT::datatable(index_winsor, options = list(pageLength = 10, columnDefs = list(list(className = 'dt-center', targets = "_all"))), rownames = F, fillContainer = F))
