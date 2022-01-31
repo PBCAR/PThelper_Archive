@@ -121,7 +121,7 @@ elasticity_curve <- function(pt, id_var, k_span = c(2,3,4), eq_type = "koff", ag
   # IDENTIFY IDs who had a 0 value in one or both of their first 2 responses
 
   if(length(zero_id>0)){
-    pt_results[(pt_results$id %in% zero_id),][,c("Q0_derived","Omax_derived","Pmax_derived","Elasticity","Omax","Pmax")] <- NA
+    pt_results[(pt_results$id %in% zero_id),][,c("Q0_derived","Omax_derived","Pmax_derived","Elasticity")] <- NA
 
     cat(" IDs with a zero consumption value in the first and/ or second price: ", zero_id,sep=" ","\n")
 
