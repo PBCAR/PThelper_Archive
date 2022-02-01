@@ -1,18 +1,20 @@
+[![R-CMD-check](https://github.com/PBCAR/PThelper/actions/workflows/r_check_standard.yml/badge.svg)](https://github.com/PBCAR/PThelper/actions/workflows/r_check_standard.yml) [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.5847711.svg)](https://doi.org/10.5281/zenodo.5847711)
+
 # The {PThelper} Package
 
-This package is designed to walk users through the various steps required to clean and process purchase task data. Designed with non-R users in mind, the package focuses on familiarizing users on both the raw and processed data.
+This package is designed to walk users through the various steps required to clean and process purchase task data. The benefit of this package is that it provides a standardized framework for processing purchase task data, improving reproducibility.
 
-The {PThelper} package offers 8 different functions to walk users through 3 different stages of purchase task processing:
+The {PThelper} package offers 8 different functions for 3 different stages of purchase task processing:
 
 i)  The pre-processing stage of the raw data;
 
-ii)  The calculation of elasticity and derived indices stage via curve-fitting; and
+ii)  The calculation of elasticity and derived indicators stage via curve-fitting; and
 
 iii)  The index-level variable management
 
 This package makes use of the wonderful package for processing Behavioral Economic Data by Brent Kaplan (2018) called {[beezdemand](https://github.com/brentkaplan/beezdemand)}. It also makes use of several other packages, including the powerful {ggplot2} for all visualization purposes.
 
-Example Cigarette Purchase Task (CPT) data are provided to demonstrate each function. Examples using this data (`cpt_data`) and each function are provided in detail.
+Example Cigarette Purchase Task (CPT) data (`cpt_data`) are provided by this package. Examples using each function on this data set are demonstrated in detail below.
 
 ## Installation
 
@@ -25,11 +27,11 @@ devtools::install_github("PBCAR/PThelper")
 
 ## Introduction to Purchase Tasks
 
-These demand instruments are used to measure the reinforcer pathology - the extent to which a value for a commodity is effected by increased cost. Greater demand (i.e. little sensitivity to changes in price) is often associated with substance-related problems and use disorders (see Bickel et al., 2011). The 5 most commonly used indices generated from the purchase task are:
+These demand instruments are used to measure the relative reinforcement of a substance - the extent to which a value for a commodity is effected by increased cost. Greater demand (i.e. little sensitivity to changes in price) is often associated with substance-related problems and use disorders (see Bickel et al., 2011). The 5 most commonly used indicators generated from the purchase task are:
 
 Breakpoint -- The first increment of cost with zero consumption
 
-Intensity -- Consumption at the first price point
+Intensity -- Consumption at zero (or negligible) cost
 
 Omax -- The maximum expenditure
 
@@ -39,7 +41,7 @@ Elasticity -- Measures sensitivity of consumption to increases in cost
 
 ## i) Pre-Processing
 
-Purchase task processing requires preparation, and using the `price_prep()`, `pt_prep()`, and `pt_qc()` functions will ensure the proper cleaning of the data prior calculating the purchase task indices.
+Purchase task processing requires preparation, and using the `price_prep()`, `pt_prep()`, and `pt_qc()` functions will ensure the proper cleaning of the data prior calculating the purchase task indicators.
 
 The `plot_summary()` function can also be used at the end of the pre-processing stage to visualize the consumption and expenditure across the prices of the purchase task, prior to any outlier management.
 
@@ -53,7 +55,9 @@ To process purchase task data, the variables need to be renamed as the prices th
 
 The `pt_prep()` function assigns zero values to items not administered. Since purchase task items are usually only administered until a consumption of zero is reached (often within an array of prices), missing items need to be assigned zero values for proper processing. The assignment of zero-values is only done for individuals whose final item is a zero-response.
 
-In the case that individuals contradict themselves after giving a response of zero (by giving a non-zero response for the final price of the array), they do not have their responses re-assigned as zeroes. This is because it cannot be assumed that all subsequent responses would also be zeroes. Individuals who move through all items without zero consumption reached will still be included, and their breakpoint value will be assigned as the maximum price point of the assessment rounded to the next integer.
+In the case that individuals contradict themselves after giving a response of zero (by giving a non-zero response for the final price of the array), they do not have their responses re-assigned as zeroes. This is because it cannot be assumed that all subsequent responses would also be zeroes.
+
+*NOTE:* Individuals who move through all items without zero consumption reached will still be included, and their breakpoint value will be assigned as the maximum price point of the assessment rounded to the next integer.
 
 #### c) Missing Data Identification:
 
@@ -79,19 +83,19 @@ The `winsor_price()` function is used as outlier management at the price level. 
 
 i)  Option 1 replaces outliers with the maximum non-outlying price rounded up;
 
-ii) Option 2 replaces outliers with a price 1 higher than highest (or 1 lower than the lowest) non-outlying value; and
+ii) Option 2 replaces outliers with a value 1 unit higher than highest (or 1 unit lower than the lowest) non-outlying value; and
 
-iii) Option 3 replaces outliers with 1 value above the next highest non-outlying value to maintain order
+iii) Option 3 replaces outliers with a value 1 unit above the next highest non-outlying value to maintain order
 
 The default z-value used to identify outlying values is 3.99, and the default winsorization type is 'option3'.
 
 ## ii) Calculating Elasticity and Derived Values:
 
-To calculate elasticity, a non-linear curve is fit to the price-level data using the {PThelper} function `elasticity_curve()`. This function will also provide a diagnostic overview of the sample data curve, as well as individual curves if requested by the user.
+To calculate elasticity, a non-linear curve is fit to the price-level data using the `elasticity_curve()` function. This function also provides a diagnostic overview of the sample data curve, as well as individual curves if requested by the user.
 
-#### a) Empircal Purchase Task Indices:
+#### a) Empircal Purchase Task Indicators:
 
-In this step of calculating derived values by fitting a non-linear curve to the data using the `elasticity_curve()` function, the empirical values for Intensity, Breakpoint, Omax, and Pmax are also processed and retained automatically in this stage.
+The empirical values for Intensity, Breakpoint, Omax, and Pmax are processed and retained in this stage.
 
 #### b) Fitting the Curve:
 
@@ -99,27 +103,29 @@ The fit of the elasticity curve by the `elasticity_curve()` function is done usi
 
 #### c) Curve Visualization:
 
-The overall sample curve is visualized, with the option to visualize each individual curve on the same plot (known as a spaghetti plot), identifying those with extreme sensitivity to price (i.e. high elasticity values \> a z-score of 3). Note that the individual curves visualization can take time to render, especially with large data sets.
+The overall sample curve is visualized, with the option to visualize each individual curve on the same plot (known as a spaghetti plot), identifying those with extreme sensitivity to price (i.e. high elasticity values; \> a z-score of 3). *NOTE:* The individual curves visualization can take time to render, especially with large data sets.
 
-## iii) Final Processing of Purchase Task Indices:
+## iii) Final Processing of Purchase Task Indicators:
 
-Additional optional processing are available by using the `winsor_index()` and `plot_transform()` functions. These aide with outlier management and management of distributional shape of the index-level purchase task variables.
+Additional optional processing are available by using the `winsor_index()` and `plot_transform()` functions. These aid with outlier management and management of the distributional shape of the indicator-level purchase task variables.
 
 #### a) Index-Level Winsorization (Optional):
 
-The `winsor_index()` function offers an additional step used to manage outlying data at the index-level. It offers the same 3 winsorization types as the price-level winsorization function:
+The `winsor_index()` function offers an additional step used to manage outlying data at the indicator-level. It offers the same 3 winsorization types as the price-level winsorization function:
 
 i)  Option 1 replaces outliers with the maximum non-outlying value rounded up;
 
-ii) Option 2 replaces outliers with a value 1 higher than highest (or 1 lower than the lowest) non-outlying value; and
+ii) Option 2 replaces outliers with a value 1 unit higher than highest (or 1 unit lower than the lowest) non-outlying value; and
 
-iii) Option 3 replaces outliers with 1 value above the next highest non-outlying value to maintain order
+iii) Option 3 replaces outliers with a value 1 unit above the next highest non-outlying value to maintain order.
+
+*NOTE:* The unit in Option 3 is user-defined via the `delta` argument, with a default value of 0.001.
 
 As with outlier management of the price-level data, the default z-value used to identify outlying values is 3.99, and the default winsorization type is 'option3'.
 
 #### b) Transformation of Purchase Task Variables (Optional):
 
-Optional transformation of index-level variables using the `plot_transform()` function, aides in diagnosing the best transformation to achieve an approximately normal distribution. This function uses the two most common transformations for purchase task indices, specifically log (log of base 10) and square root due to the distribution often being right-skewed (positively-skewed).
+Optional transformation of index-level variables using the `plot_transform()` function, helps in diagnosing the best transformation to achieve an approximately normal distribution. This function uses the two most common transformations for purchase task indicators, specifically log (log of base 10) and square root due to the distribution often being right-skewed (positively-skewed).
 
 ## Example Data (CPT)
 
@@ -156,7 +162,7 @@ PT2 <- pt_prep(PT, id_var = "ID")
 Those who exit the assessment with a non-zero response will be considered missing alongside those with true missing data on all items, and their IDs will be printed to the console:
 
 ```
-IDs with Missing Values:: 11_A 19_A 22_B 24_B 28_A 30_B 36_A 43_B 46_B 49_A 53_A 66_B 73_B 74_A
+IDs with Missing Values: 11_A 19_A 22_B 24_B 28_A 30_B 36_A 43_B 46_B 49_A 53_A 66_B 73_B 74_A
 ```
 
 #### The `pt_qc()` Function:
@@ -182,7 +188,7 @@ An optional step in pre-processing is outlier management of consumption values. 
 PT4 <- winsor_price(PT3, id_var = "ID", type = "option3", table = F)
 ```
 
-The changes made to consumption values are identified by ID and price in the console (or in the 'Viewer' pane if the argument table is set to TRUE):
+The changes made to consumption values are identified by ID and price in the console (or in the 'Viewer' pane if the argument `table` is set to TRUE):
 
 ```
 |ID   |Price | Original_Value| Winsorized_Value|
@@ -197,7 +203,7 @@ The changes made to consumption values are identified by ID and price in the con
 
 #### The `plot_summary()` Function:
 
-The end of the pre-processing stage should finish with a visual inspection of both the consumption and expenditure across the prices of the purchase task. This can be achieved using the `plot_summary()` function:
+The end of the pre-processing stage should finish with a visual inspection of both consumption and expenditure across the prices of the purchase task. This can be achieved using the `plot_summary()` function:
 
 ```
 plot_summary(PT3, id_var = "ID")
@@ -205,7 +211,7 @@ plot_summary(PT3, id_var = "ID")
 
 The visualization is printed to the 'Plots' pane:
 
-![](examples/plot_summary.png)
+![](man/figures/plot_summary.png)
 
 ## ii) Calculating Elasticity and Derived Values:
 
@@ -215,7 +221,7 @@ Calculating the elasticity curve is achieved using the `elasticity_curve()` func
 PT5 <- elasticity_curve(PT4, id_var = "ID")
 ```
 
-The best fitting k-value is identified in the console printout. Additionally, IDs with changes to Breakpoint values (who had more than 1 zero consumption value) are identified alongside the IDs which could not have an elasticity value calculated due to having a consumption value of zero in the first and/ or second item of the purchase task:
+The best fitting k-value is identified in the console printout. Additionally, IDs with changes to Breakpoint values (who had more than 1 zero consumption value) are identified, alongside the IDs which could not have an elasticity value calculated due to having a consumption value of zero in the first and/ or second item of the purchase task:
 
 ```
 Selected k-value:  2 
@@ -225,7 +231,7 @@ IDs with a zero consumption value in the first and/ or second price:  10_A 15_A 
 
 An overall curve of the entire sample is provided with this function, which is printed to the 'Plots' pane:
 
-![](examples/elasticity_overall_curve.png)
+![](man/figures/elasticity_overall_curve.png)
 
 
 #### If `id_curve` is set to TRUE:
@@ -245,9 +251,9 @@ IDs with extreme price sensitivity (Elasticity values > z-score of 3):  25_B 32_
 
 The console printout will also prompt the user to "Hit \<Return> to see next plot:", which will allow them to see the individual elasticity curves plot after the overall sample curve is printed to the 'Plots' pane:
 
-![](examples/elasticity_individual_curves.png)
+![](man/figures/elasticity_individual_curves.png)
 
-## iii) Final Processing of Purchase Task Indices:
+## iii) Final Processing of Purchase Task Indicators:
 
 #### The `winsor_index()` Function:
 
@@ -257,7 +263,7 @@ All, none, or some of the index-level variables can undergo winsorization to man
 PT6 <- winsor_index(PT6, id_var = "ID", index_var = "Intensity", type = "option3", delta = 1)
 ```
 
-Changes made to the chosen index-level variable are identified by ID in the console (or in the 'Viewer' pane if the argument table is set to TRUE):
+Changes made to the chosen indicator variable are identified by ID in the console (or in the 'Viewer' pane if the argument `table` is set to TRUE):
 
 ```
 |ID   | Old Intensity| New Intensity|
@@ -268,14 +274,14 @@ Changes made to the chosen index-level variable are identified by ID in the cons
 
 #### The `plot_transform()` Function:
 
-The `plot_transform()` function provides summary statistics as well as a visualization of distribution of the original variable alongside two transformations (log10 and square root):
+This function provides summary statistics as well as a visualization of distribution of the original variable, alongside two transformations (log10 and square root):
 ```
 plot_transform(PT6, pt_var = "Intensity")
 ```
 
-In the instance of 0 values, a small constant of 0.01 is added to the variable prior to log transformation. The visualization is printed to the 'Plots' pane:
+In the presence of zero values in the indicator, a small constant of 0.01 is added prior to log transformation. The visualization is printed to the 'Plots' pane:
 
-![](examples/plot_transform.png)
+![](man/figures/plot_transform.png)
 
 ## References
 
