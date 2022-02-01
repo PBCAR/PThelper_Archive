@@ -119,7 +119,7 @@ ii) Option 2 replaces outliers with a value 1 unit higher than highest (or 1 uni
 
 iii) Option 3 replaces outliers with a value 1 unit above the next highest non-outlying value to maintain order.
 
-*NOTE:* The unit in Option 3 is user-defined via the `delta` argument, with a default value of 0.001.
+*NOTE:* The unit in Option 3 is user-defined via the `delta` argument. Due to the small nature of elasticity values, a value of 0.001 is recommended.
 
 As with outlier management of the price-level data, the default z-value used to identify outlying values is 3.99, and the default winsorization type is 'option3'.
 
