@@ -4,7 +4,7 @@
 \alias{pt_qc}
 \title{PT QC}
 \usage{
-pt_qc(pt, id_var, bounce_val = 0.1, rev_n = 1.5, cons_n = 2)
+pt_qc(pt, id_var, bounce_val = 0.1, rev_n = 0, cons_n = 2)
 }
 \arguments{
 \item{pt}{A data frame consisting of the `id_var` and purchase task variables.}
@@ -15,8 +15,8 @@ pt_qc(pt, id_var, bounce_val = 0.1, rev_n = 1.5, cons_n = 2)
 threshold to identify excessive inconsistencies in responses. The default bounce
 value is 0.1. IDs exceeding this bounce value are removed.}
 
-\item{rev_n}{The number of acceptable reversals from zero. The default number is 1.5,
-which removes IDs with 2 or more reversals from zero.}
+\item{rev_n}{The number of acceptable reversals from zero. The default number is 0,
+which removes IDs with 1 or more reversals from zero.}
 
 \item{cons_n}{The number of consecutive zeroes to signify a reversal from zero using
 the {beezdemand} package. The default number of consecutive zeroes is 2.}
@@ -38,6 +38,6 @@ Experimental and clinical psychopharmacology, 23(5), 377.
 pt1 <- pt_qc(pt, id_var = "ID")
 ## Customizing the third criterion (number of reversals):
 ## This identifies and removes IDs with any reversals (with a reversal defined as 1 zero value).
-pt2 <- pt_qc(pt, id_var = "ID", rev_n = 0, cons_n = 1)
+pt2 <- pt_qc(pt, id_var = "ID", cons_n = 1)
 }
 }

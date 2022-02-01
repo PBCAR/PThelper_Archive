@@ -92,7 +92,7 @@ winsor_index <- function(pt, id_var, index_var, z_val = 3.99, type = "option3", 
 
   pt_out <- pt2[,c(index_var)]
   pt[,c(index_var)] <- replace(pt[,c(index_var)], !is.na(pt[,c(index_var)]), pt_out)
-  
+
   names(pt)[names(pt) == "id"] <- id_var
 
   if(table==TRUE) (

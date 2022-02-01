@@ -14,8 +14,8 @@
 #' @param bounce_val Expressed as a proportion, the bounce value is used as a
 #' threshold to identify excessive inconsistencies in responses. The default bounce
 #' value is 0.1. IDs exceeding this bounce value are removed.
-#' @param rev_n The number of acceptable reversals from zero. The default number is 1.5,
-#' which removes IDs with 2 or more reversals from zero.
+#' @param rev_n The number of acceptable reversals from zero. The default number is 0,
+#' which removes IDs with 1 or more reversals from zero.
 #' @param cons_n The number of consecutive zeroes to signify a reversal from zero using
 #' the {beezdemand} package. The default number of consecutive zeroes is 2.
 #' @examples
@@ -24,11 +24,11 @@
 #' pt1 <- pt_qc(pt, id_var = "ID")
 #' ## Customizing the third criterion (number of reversals):
 #' ## This identifies and removes IDs with any reversals (with a reversal defined as 1 zero value).
-#' pt2 <- pt_qc(pt, id_var = "ID", rev_n = 0, cons_n = 1)
+#' pt2 <- pt_qc(pt, id_var = "ID", cons_n = 1)
 #' }
 #' @export
 
-pt_qc <- function(pt, id_var, bounce_val = 0.1, rev_n = 1.5, cons_n = 2){
+pt_qc <- function(pt, id_var, bounce_val = 0.1, rev_n = 0, cons_n = 2){
 
   # WARNING: NA values should have been changed to 0 as outlined in the `pt_prep()` function
   if(any(is.na(pt))) stop("IDs with missing values")
