@@ -1,4 +1,4 @@
-[![R-CMD-check](https://github.com/PBCAR/PThelper/actions/workflows/r_check_standard.yml/badge.svg)](https://github.com/PBCAR/PThelper/actions/workflows/r_check_standard.yml) [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.5847711.svg)](https://doi.org/10.5281/zenodo.5847711)
+[![R-CMD-check](https://github.com/PBCAR/PThelper/actions/workflows/r_check_standard.yml/badge.svg)](https://github.com/PBCAR/PThelper/actions/workflows/r_check_standard.yml) [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.5935353.svg)](https://doi.org/10.5281/zenodo.5935353)
 
 # The {PThelper} Package
 
