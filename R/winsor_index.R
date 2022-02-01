@@ -14,8 +14,8 @@
 #' @param z_val The absolute z-value to define outliers.
 #' @param type Type of winsorization, specifically one of: c("option1","option2","option3"). The default
 #' outlier management technique is "option3".
-#' @param delta Used to retain winsorization order when using winsorization type "option3". The
-#' default is 0.001.
+#' @param delta Used to retain winsorization order when using winsorization type "option3". This must be
+#' defined by the user. For elasticity, a small value of 0.001 is recommended.
 #' @param table If set to TRUE, an html table is provided, which is especially helpful for large data
 #' sets. The default is FALSE, and a table in the console will be printed.
 #' @examples
@@ -24,7 +24,9 @@
 #' }
 #' @export
 
-winsor_index <- function(pt, id_var, index_var, z_val = 3.99, type = "option3", delta = 0.001, table = F) {
+winsor_index <- function(pt, id_var, index_var, z_val = 3.99, type = "option3", delta = NULL, table = F) {
+
+  if(is.null(delta) & type=="option3") stop("Delta value required for this winsorization option!")
 
   pt_names <- names(pt)
   prices <- pt_names[pt_names!=id_var]
