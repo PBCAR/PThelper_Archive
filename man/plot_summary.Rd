@@ -4,12 +4,21 @@
 \alias{plot_summary}
 \title{PLOT SUMMARY}
 \usage{
-plot_summary(pt, id_var)
+plot_summary(pt, id_var, type = "default", group_var = NULL)
 }
 \arguments{
 \item{pt}{A data frame consisting of the purchase variables for each `id_var`}
 
 \item{id_var}{The name of the unique identifier (ID) as found in the data frame.}
+
+\item{type}{The type of plot to produce. One of c("default","group","individual").
+The "default" plot type provides a summary of all individuals in the data frame.
+The "group" type provides a summary of consumption and expenditure by grouping
+variable. If wanting to produce individual plots by each ID, then the "individual"
+type of plot should be selected, as this will visualize all participants' consumption
+and expenditure in a spaghetti plot.}
+
+\item{group_var}{The grouping variable if using type "group".}
 }
 \description{
 This function helps users to inspect the price-level purchase task data by

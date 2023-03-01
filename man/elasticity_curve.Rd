@@ -9,6 +9,7 @@ elasticity_curve(
   id_var,
   k_span = c(2, 3, 4),
   eq_type = "koff",
+  y_type = "log10",
   agg_type = "mean",
   id_curve = FALSE,
   id_label = TRUE
@@ -24,6 +25,9 @@ elasticity_curve(
 \item{eq_type}{Equation type to fit elasticity curve using the {beezdemand} package.
 One of c("hs","koff"), with "hs" for Hursh and Silberbeg (2008) or Koffarnus,
 Franck, Stein, and Bickel (2015).}
+
+\item{y_type}{The way the y-axis (prices) are to be displayed. One of c("log10","original"),
+with "log10" as the default, or "original" for the existing price values.}
 
 \item{agg_type}{Aggregate type to fit elasticity curve using the {beezdemand} package.
 One of c("mean","pooled"), with the default set to "mean".}

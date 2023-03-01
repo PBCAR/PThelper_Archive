@@ -17,6 +17,8 @@ utils::globalVariables(c("Elasticity","Q0_derived","Omax_derived","Pmax_derived"
 #' Franck, Stein, and Bickel (2015).
 #' @param agg_type Aggregate type to fit elasticity curve using the {beezdemand} package.
 #' One of c("mean","pooled"), with the default set to "mean".
+#' @param y_type The way the y-axis (prices) are to be displayed. One of c("log10","original"),
+#' with "log10" as the default, or "original" for the existing price values.
 #' @param id_curve If set to TRUE, each individual curve is visualized on a single plot, with
 #' those sensitive to price increases (i.e. show more elasticity) highlighted. Specifically,
 #' highlighted individuals are those greater than 3 standard deviations away from the mean (z-score > 3).
@@ -30,7 +32,7 @@ utils::globalVariables(c("Elasticity","Q0_derived","Omax_derived","Pmax_derived"
 #' }
 #' @export
 
-elasticity_curve <- function(pt, id_var, k_span = c(2,3,4), eq_type = "koff", agg_type = "mean", id_curve = FALSE, id_label = TRUE) {
+elasticity_curve <- function(pt, id_var, k_span = c(2,3,4), eq_type = "koff", y_type = "log10", agg_type = "mean", id_curve = FALSE, id_label = TRUE) {
 
   pt_names <- names(pt)
   prices <- pt_names[pt_names!=id_var]
@@ -161,6 +163,9 @@ elasticity_curve <- function(pt, id_var, k_span = c(2,3,4), eq_type = "koff", ag
   }
 
   # MEAN CURVE PLOT
+
+  if(y_type=="log10"){
+
   mean_curve_plot <- ggplot2::ggplot(point_dat, ggplot2::aes(x = x,y = y)) +
     ggplot2::geom_line(est_dat, mapping = ggplot2::aes(x = x, y = y), colour = "#999999", size = 1.5) +
     ggplot2::geom_segment(dat_pt, mapping = ggplot2::aes(x = x1, y = min(point_dat$y),
@@ -184,6 +189,33 @@ elasticity_curve <- function(pt, id_var, k_span = c(2,3,4), eq_type = "koff", ag
                    axis.title = ggplot2::element_text(size = 15, face = "bold"),
                    axis.text = ggplot2::element_text(size = 13),
                    axis.line = ggplot2::element_line(colour = "black", size = 1))
+  }
+
+  if(y_type=="original"){
+
+    mean_curve_plot <- ggplot2::ggplot(point_dat, ggplot2::aes(x = x,y = y)) +
+      ggplot2::geom_line(est_dat, mapping = ggplot2::aes(x = x, y = y), colour = "#999999", size = 1.5) +
+      ggplot2::geom_segment(dat_pt, mapping = ggplot2::aes(x = x1, y = min(point_dat$y),
+                                                           xend = x2, yend = y2), show.legend = F, size = 0.75, linetype = "dashed") +
+      ggplot2::geom_point(size = 3, show.legend=F, colour = "#000000", stroke = 0.5) +
+      ggplot2::scale_x_log10(breaks=c(0.0001,  0.001, 0.01, 0.1, 1, 10, 100, 1000, 10000, 100000),
+                             labels=c(paste0(min(prices)),  0.001, 0.01, 0.1, 1, 10, 100, 1000, 10000, 100000)) +
+      ggplot2::theme_classic() + ggplot2::xlab("Price") + ggplot2::ylab("Consumption (Log)") +
+      ggplot2::ggtitle(paste0(agg_type," Aggregate Demand Curve & Derived Values")) +
+      ggplot2::geom_text(data = mean.curve.final,
+                         ggplot2::aes(label = paste0("\n Elasticity: ", round(Elasticity, digits = 4),
+                                                     "\n Q0: ", round(Q0_derived, digits = 2),
+                                                     "\n Pmax: ", round(Pmax_derived, digits = 2),
+                                                     "\n Omax: ", round(Omax_derived, digits = 2)),
+                                      x = Inf, y = Inf, hjust = 1, vjust = 1),
+                         size = 5, fontface = "bold", show.legend = F) +
+      ggplot2::theme(plot.title = ggplot2::element_text(size = 20, face = "bold"),
+                     plot.subtitle = ggplot2::element_text(size = 15, face = "italic"),
+                     axis.title = ggplot2::element_text(size = 15, face = "bold"),
+                     axis.text = ggplot2::element_text(size = 13),
+                     axis.line = ggplot2::element_line(colour = "black", size = 1))
+
+  }
 
   ##### ----- ELASTICITY CURVE OF EACH ID
   if(id_curve==TRUE) {
@@ -242,47 +274,98 @@ elasticity_curve <- function(pt, id_var, k_span = c(2,3,4), eq_type = "koff", ag
 
       if(id_label==TRUE) {
 
-    id_curve_plot <- ggplot2::ggplot(id_est_dat, ggplot2::aes(x = x, y = y)) +
-      ggplot2::geom_line(id_est_dat[(id_est_dat$alpha_sens=="none"),],
-                         mapping = ggplot2::aes(x = x, y = y, group = id, colour = alpha_sens),show.legend = F) +
-      ggplot2::geom_line(id_est_dat[(id_est_dat$alpha_sens=="highlight"),],
-                         mapping = ggplot2::aes(x = x, y = y, group = id, colour = alpha_sens), show.legend = F) +
-      ggrepel::geom_label_repel(alpha_sens_labels, mapping = ggplot2::aes(x = x, y = y, label = id, colour = alpha_sens),
-                                min.segment.length = 0, position = ggrepel::position_nudge_repel(x = 0.5), max.overlaps = Inf,
-                                segment.size = 0.2, hjust = 1, show.legend = F) +
-      ggplot2::scale_colour_manual(values = c("#000000","#BEBEBE")) +
-      ggplot2::coord_cartesian(clip = "off") +
-      ggplot2::scale_x_log10(breaks = c(0.0001, 0.01, 0.1, 1, 10, 100, 1000, 10000, 100000),
-                             labels = c(paste0(min(prices)), 0.01, 0.1, 1, 10, 100, 1000, 10000, 100000),
-                             expand = c(0.01,0.01,0.1,0.1)) +
-      ggplot2::scale_y_log10(breaks = c(0.01, 0.1, 1, 10, 100, 1000, 10000, 100000),
-                             labels = c(0.01, 0.1, 1, 10, 100, 1000, 10000, 100000)) +
-      ggplot2::theme_classic() + ggplot2::xlab("Price (Log)") + ggplot2::ylab("Consumption (Log)") +
-      ggplot2::labs(title = paste0("Individual Elasticity Curves"),
-                    subtitle = "Labelled IDs with Elasticity z-scores > 3") +
-      ggplot2::theme(plot.title = ggplot2::element_text(size = 20, face = "bold"),
-                     plot.subtitle = ggplot2::element_text(size = 15, face = "italic"),
-                     axis.title = ggplot2::element_text(size = 15, face = "bold"),
-                     axis.text = ggplot2::element_text(size = 13),
-                     axis.line = ggplot2::element_line(colour = "black", size = 1))
+        if(y_type=="log10"){
+
+          id_curve_plot <- ggplot2::ggplot(id_est_dat, ggplot2::aes(x = x, y = y)) +
+            ggplot2::geom_line(id_est_dat[(id_est_dat$alpha_sens=="none"),],
+                               mapping = ggplot2::aes(x = x, y = y, group = id, colour = alpha_sens),show.legend = F) +
+            ggplot2::geom_line(id_est_dat[(id_est_dat$alpha_sens=="highlight"),],
+                               mapping = ggplot2::aes(x = x, y = y, group = id, colour = alpha_sens), show.legend = F) +
+            ggrepel::geom_label_repel(alpha_sens_labels, mapping = ggplot2::aes(x = x, y = y, label = id, colour = alpha_sens),
+                                      min.segment.length = 0, position = ggrepel::position_nudge_repel(x = 0.5), max.overlaps = Inf,
+                                      segment.size = 0.2, hjust = 1, show.legend = F) +
+            ggplot2::scale_colour_manual(values = c("#000000","#BEBEBE")) +
+            ggplot2::coord_cartesian(clip = "off") +
+            ggplot2::scale_x_log10(breaks = c(0.0001, 0.01, 0.1, 1, 10, 100, 1000, 10000, 100000),
+                                   labels = c(paste0(min(prices)), 0.01, 0.1, 1, 10, 100, 1000, 10000, 100000),
+                                   expand = c(0.01,0.01,0.1,0.1)) +
+            ggplot2::scale_y_log10(breaks = c(0.01, 0.1, 1, 10, 100, 1000, 10000, 100000),
+                                   labels = c(0.01, 0.1, 1, 10, 100, 1000, 10000, 100000)) +
+            ggplot2::theme_classic() + ggplot2::xlab("Price (Log)") + ggplot2::ylab("Consumption (Log)") +
+            ggplot2::labs(title = paste0("Individual Elasticity Curves"),
+                          subtitle = "Labelled IDs with Elasticity z-scores > 3") +
+            ggplot2::theme(plot.title = ggplot2::element_text(size = 20, face = "bold"),
+                           plot.subtitle = ggplot2::element_text(size = 15, face = "italic"),
+                           axis.title = ggplot2::element_text(size = 15, face = "bold"),
+                           axis.text = ggplot2::element_text(size = 13),
+                           axis.line = ggplot2::element_line(colour = "black", size = 1))
+
+        }
+
+        if(y_type=="original"){
+
+          id_curve_plot <- ggplot2::ggplot(id_est_dat, ggplot2::aes(x = x, y = y)) +
+            ggplot2::geom_line(id_est_dat[(id_est_dat$alpha_sens=="none"),],
+                               mapping = ggplot2::aes(x = x, y = y, group = id, colour = alpha_sens),show.legend = F) +
+            ggplot2::geom_line(id_est_dat[(id_est_dat$alpha_sens=="highlight"),],
+                               mapping = ggplot2::aes(x = x, y = y, group = id, colour = alpha_sens), show.legend = F) +
+            ggrepel::geom_label_repel(alpha_sens_labels, mapping = ggplot2::aes(x = x, y = y, label = id, colour = alpha_sens),
+                                      min.segment.length = 0, position = ggrepel::position_nudge_repel(x = 0.5), max.overlaps = Inf,
+                                      segment.size = 0.2, hjust = 1, show.legend = F) +
+            ggplot2::scale_colour_manual(values = c("#000000","#BEBEBE")) +
+            ggplot2::coord_cartesian(clip = "off") +
+            ggplot2::scale_x_log10(breaks = c(0.0001, 0.01, 0.1, 1, 10, 100, 1000, 10000, 100000),
+                                   labels = c(paste0(min(prices)), 0.01, 0.1, 1, 10, 100, 1000, 10000, 100000),
+                                   expand = c(0.01,0.01,0.1,0.1)) +
+            ggplot2::theme_classic() + ggplot2::xlab("Price") + ggplot2::ylab("Consumption (Log)") +
+            ggplot2::labs(title = paste0("Individual Elasticity Curves"),
+                          subtitle = "Labelled IDs with Elasticity z-scores > 3") +
+            ggplot2::theme(plot.title = ggplot2::element_text(size = 20, face = "bold"),
+                           plot.subtitle = ggplot2::element_text(size = 15, face = "italic"),
+                           axis.title = ggplot2::element_text(size = 15, face = "bold"),
+                           axis.text = ggplot2::element_text(size = 13),
+                           axis.line = ggplot2::element_line(colour = "black", size = 1))
+        }
 
 
     } else if(id_label==FALSE) {
 
-      id_curve_plot <- ggplot2::ggplot(id_est_dat, ggplot2::aes(x = x, y = y)) +
-        ggplot2::geom_line(id_est_dat, mapping = ggplot2::aes(x = x, y = y, group = id), alpha = 0.5, colour = "#999999", show.legend = F) +
-        ggplot2::scale_x_log10(breaks = c(0.0001, 0.01, 0.1, 1, 10, 100, 1000, 10000, 100000),
-                               labels = c(paste0(min(prices)), 0.01, 0.1, 1, 10, 100, 1000, 10000, 100000),
-                               expand = c(0.01,0.01,0.01,0.01)) +
-        ggplot2::scale_y_log10(breaks = c(0.01, 0.1, 1, 10, 100, 1000, 10000, 100000),
-                               labels = c(0.01, 0.1, 1, 10, 100, 1000, 10000, 100000)) +
-        ggplot2::theme_classic() + ggplot2::xlab("Price (Log)") + ggplot2::ylab("Consumption (Log)") +
-        ggplot2::labs(title = paste0("Individual Elasticity Curves")) +
-        ggplot2::theme(plot.title = ggplot2::element_text(size = 20, face = "bold"),
-                       plot.subtitle = ggplot2::element_text(size = 15, face = "italic"),
-                       axis.title = ggplot2::element_text(size = 15, face = "bold"),
-                       axis.text = ggplot2::element_text(size = 13),
-                       axis.line = ggplot2::element_line(colour = "black", size = 1))
+
+      if(y_type=="log10"){
+
+        id_curve_plot <- ggplot2::ggplot(id_est_dat, ggplot2::aes(x = x, y = y)) +
+          ggplot2::geom_line(id_est_dat, mapping = ggplot2::aes(x = x, y = y, group = id), alpha = 0.5, colour = "#999999", show.legend = F) +
+          ggplot2::scale_x_log10(breaks = c(0.0001, 0.01, 0.1, 1, 10, 100, 1000, 10000, 100000),
+                                 labels = c(paste0(min(prices)), 0.01, 0.1, 1, 10, 100, 1000, 10000, 100000),
+                                 expand = c(0.01,0.01,0.01,0.01)) +
+          ggplot2::scale_y_log10(breaks = c(0.01, 0.1, 1, 10, 100, 1000, 10000, 100000),
+                                 labels = c(0.01, 0.1, 1, 10, 100, 1000, 10000, 100000)) +
+          ggplot2::theme_classic() + ggplot2::xlab("Price (Log)") + ggplot2::ylab("Consumption (Log)") +
+          ggplot2::labs(title = paste0("Individual Elasticity Curves")) +
+          ggplot2::theme(plot.title = ggplot2::element_text(size = 20, face = "bold"),
+                         plot.subtitle = ggplot2::element_text(size = 15, face = "italic"),
+                         axis.title = ggplot2::element_text(size = 15, face = "bold"),
+                         axis.text = ggplot2::element_text(size = 13),
+                         axis.line = ggplot2::element_line(colour = "black", size = 1))
+
+      }
+
+      if(y_type=="original"){
+
+        id_curve_plot <- ggplot2::ggplot(id_est_dat, ggplot2::aes(x = x, y = y)) +
+          ggplot2::geom_line(id_est_dat, mapping = ggplot2::aes(x = x, y = y, group = id), alpha = 0.5, colour = "#999999", show.legend = F) +
+          ggplot2::scale_x_log10(breaks = c(0.0001, 0.01, 0.1, 1, 10, 100, 1000, 10000, 100000),
+                                 labels = c(paste0(min(prices)), 0.01, 0.1, 1, 10, 100, 1000, 10000, 100000),
+                                 expand = c(0.01,0.01,0.01,0.01)) +
+          ggplot2::theme_classic() + ggplot2::xlab("Price") + ggplot2::ylab("Consumption (Log)") +
+          ggplot2::labs(title = paste0("Individual Elasticity Curves")) +
+          ggplot2::theme(plot.title = ggplot2::element_text(size = 20, face = "bold"),
+                         plot.subtitle = ggplot2::element_text(size = 15, face = "italic"),
+                         axis.title = ggplot2::element_text(size = 15, face = "bold"),
+                         axis.text = ggplot2::element_text(size = 13),
+                         axis.line = ggplot2::element_line(colour = "black", size = 1))
+      }
+
     }
 
 
