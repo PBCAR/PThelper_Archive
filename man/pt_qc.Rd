@@ -4,28 +4,48 @@
 \alias{pt_qc}
 \title{PT QC}
 \usage{
-pt_qc(pt, id_var, bounce_val = 0.1, rev_n = 0, cons_n = 2)
+pt_qc(
+  pt,
+  id_var,
+  delta_q = 0.025,
+  bounce_type = "initial",
+  jump = 0.25,
+  bounce_val = 0.1,
+  rev_n = 0,
+  cons_0 = 1
+)
 }
 \arguments{
-\item{pt}{A data frame consisting of the `id_var` and purchase task variables.}
+\item{pt}{A list consisting of two data frames: "data" which consists of the `id_var` and purchase task variables, and the "qc_data" which provides details on
+the results of the quality control for all IDs.}
 
 \item{id_var}{The name of the unique identifier (ID) as identified in the data frame.}
 
-\item{bounce_val}{Expressed as a proportion, the bounce value is used as a
-threshold to identify excessive inconsistencies in responses. The default bounce
-value is 0.1. IDs exceeding this bounce value are removed.}
+\item{delta_q}{The log10-unit reduction in consumption from the first to last price. The default is set to 0.025 (suggested by Stein et al., 2015),
+with values lower than 0.025 deemed non-systematic.}
 
-\item{rev_n}{The number of acceptable reversals from zero. The default number is 0,
-which removes IDs with 1 or more reversals from zero.}
+\item{bounce_type}{The type of bounce criterion applied, one of c("initial","p2p"). The default is "initial", which follows the criterion put forth by
+Stein et al. (2015). This method defines what constistutes a `jump`, with all subsequent prices in the purchase task being compared to the consumption
+at the first price. The "p2p" option is a proposed alternative, which considers any increases in consumption from one price to the next to be a `jump`
+in consumption. Both methods make use of the `bounce_val` which will only exclude participants above a set threshold of jumps.}
 
-\item{cons_n}{The number of consecutive zeroes to signify a reversal from zero using
+\item{jump}{Expressed as a proportion, the jump value is the percent increase in consumption at first price used to define an excessive increase in
+consumption. The default is 0.25 (25% as suggested by Stein et al., 2015), meaning that any consumption 25% higher than consumption at first price
+would be considered an excessive jump in consumption.}
+
+\item{bounce_val}{Expressed as a proportion, the bounce value is used as a threshold to identify excessive inconsistencies in responses. The
+default bounce value is 0.1. IDs exceeding this bounce value are removed.}
+
+\item{rev_n}{The number of acceptable reversals from zero, one of c(0,1). The default number is 0, meaning no reversals from zero are allowed.}
+
+\item{cons_0}{The number of consecutive zeroes to signify a reversal from zero, one of c(1,2). The default is 1. Previously named `cons_n`.
 the {beezdemand} package. The default number of consecutive zeroes is 2.}
 }
 \description{
-This function helps users to conduct quality control on purchase task data by
-using the 3-Criterion Algorithm by Stein et al. (2015) to remove non-systematic data:
-Specifically, this function identifies and removes IDs with: i) trend violations;
-ii) excessive bounce ratios; and iii) excessive reversals in responses.
+This function helps users to conduct quality control on purchase task data to remove non-systematic data. Specifically, this function
+identifies and removes IDs with: i) trend violations; ii) excessive bounce ratios; and iii) excessive reversals in responses. Quality
+control options follow the proposed 3-criterion method by Stein et al. (2015), but also allow for customization, as well as use of
+another option for bounce criterion used at PBCAR.
 }
 \details{
 Stein, J. S., Koffarnus, M. N., Snider, S. E., Quisenberry, A. J., & Bickel, W. K. (2015).

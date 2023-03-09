@@ -1,7 +1,7 @@
 Package: PThelper
 Type: Package
 Title: The Systematic Cleaning and Processing of Purchase Task Data: An R Statistical Package
-Version: 0.1.2
+Version: 0.1.5
 Authors@R: c(person("Kyla","Belisario", role = c("aut", "cre", "trl"), email = "kyla_belisario@protonmail.com", comment = c(ORCID = "0000-0001-5403-9531")),
     person("Ben","Goodman", role = c("aut", "trl")),
     person("Meenu","Minhas", role = c("aut"), comment = c(ORCID = "0000-0001-6741-3940")),

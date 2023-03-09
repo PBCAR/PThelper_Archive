@@ -1,5 +1,9 @@
 [![R-CMD-check](https://github.com/PBCAR/PThelper/actions/workflows/r_check_standard.yml/badge.svg)](https://github.com/PBCAR/PThelper/actions/workflows/r_check_standard.yml) [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.5847710.svg)](https://doi.org/10.5281/zenodo.5847710)
 
+## !! Updates for 2023 !!
+
+This package is currently undergoing a transformation in a few key ways prior to being submitted to CRAN. Firstly, the utility of the existing functions are being altered to provide additional information key in adequately documenting the processing for reproducibility. Secondly, the quality control function (`pt_qc()`) is being modified to accommodate different processing decisions, and to follow the Stein et al. (2015) 3 Criterion more strictly. Thirdly, additional functions will be added such as a summary function and a correlation function.
+
 # The {PThelper} Package
 
 This package is designed to walk users through the various steps required to clean and process purchase task data. The benefit of this package is that it provides a standardized framework for processing purchase task data, improving reproducibility.
@@ -43,7 +47,7 @@ Elasticity -- Measures sensitivity of consumption to increases in cost
 
 Purchase task processing requires preparation, and using the `price_prep()`, `pt_prep()`, and `pt_qc()` functions will ensure the proper cleaning of the data prior calculating the purchase task indicators.
 
-The `plot_summary()` function can also be used at the end of the pre-processing stage to visualize the consumption and expenditure across the prices of the purchase task, prior to any outlier management.
+The `plot_summary()` function can also be used at the end of the pre-processing stage to visualize the consumption and expenditure across the prices of the purchase task, prior to any outlier management. *ADDED:* Option to visualize individual consumption and expenditure using spaghetti plots using the `type` argument "individual". Another option to visualize by a grouping variable is available using the `type` argument "group".
 
 The `winsor_price()` function is an optional final pre-processing step which offers different outlier management techniques for the price-level data prior to curve-fitting and other purchase task processing.
 
@@ -75,7 +79,17 @@ i) Trend violations -- Those who start with non-zero consumption and do not exhi
 
 ii) Excessive bounce ratios -- Bounce ratios identify inconsistencies in consumption values given. The default bounce ratio is 10%; and
 
-iii) Excessive reversals in responses -- Those who exceed a user-defined number of reversals from a consumption of zero. The default defines a reversal as 2 or more consecutive zeroes and removes those with 1 or more reversals.
+iii) Excessive reversals in responses -- Those who exceed a user-defined number of reversals from a consumption of zero. The default defines a reversal as 1 or more consecutive zeroes and removes those with 1 or more reversals.
+
+**Added in 2023 (v1.5.0):**
+
+a) The `delta_q` argument: This allows for the more strict trend violation as defined by Stein et al. (2015) to be applied. The previous trend violation removed anyone only with a delta Q value of 0. This new argument will remove anyone with a delta Q value below 0.025. The formula for delta Q is as follows:
+
+delta Q = (log10(quantity at price 1) - log10(quantity at price n)) / (log10(price n) - log10(price 1))
+
+b) The ability to define bounce ratio calculation: Specifically, the previous method looked at price-to-price increases, with any increase in price Pn+1 compared to price Pn being flagged as a bounce ("jump") in consumption. This method has been retained, but the Stein et al. (2015) definition of a "jump" has been added. This method specifically defines a jump as any consumption values that are 25% higher (or other % as defined by the `jump` argument) than consumption at the lowest price. Both methods are equally valid for different reasons.
+
+c) Our own 'in-house' code to identify reversals from zeroes, as we previously utilized this functionality from the {beezdemand} package.
 
 #### f) Price-Level Winsorization (Optional):
 
@@ -104,6 +118,8 @@ The fit of the elasticity curve by the `elasticity_curve()` function is done usi
 #### c) Curve Visualization:
 
 The overall sample curve is visualized, with the option to visualize each individual curve on the same plot (known as a spaghetti plot), identifying those with extreme sensitivity to price (i.e. high elasticity values; \> a z-score of 3). *NOTE:* The individual curves visualization can take time to render, especially with large data sets.
+
+*ADDED:* Option to visualize the y-axis in either log-10 units or original units using the `y_type` argument. Options are "default" for log-10 units, or "original" for original consumption values.
 
 ## iii) Final Processing of Purchase Task Indicators:
 
