@@ -73,10 +73,7 @@ pt_qc <- function(pt, id_var, delta_q = 0.025, bounce_type = "initial", jump = 0
     pt$first_cons <- pt[,prices[1]]*(1+jump)
     pt$jumps <-  rowSums(pt[c(prices)] > pt$first_cons)
 
-    ### although it makes sense to divide by number of prices administered minus 1 (for initial value),
-    ### Stein et al. do not calculate bounce ratio this way
-
-    pt$bounce_val <- pt$jumps/length(prices)
+    pt$bounce_val <- pt$jumps/(length(prices)-1)
 
     remove.id.bounce <- pt$id[pt$bounce_val> bounce_val]
   }
