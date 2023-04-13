@@ -2,7 +2,9 @@
 
 ## !! Updates for 2023 !!
 
-This package is currently undergoing a transformation in a few key ways prior to being submitted to CRAN. Firstly, the utility of the existing functions are being altered to provide additional information key in adequately documenting the processing for reproducibility. Secondly, the quality control function (`pt_qc()`) is being modified to accommodate different processing decisions, and to follow the Stein et al. (2015) 3 Criterion more strictly. Thirdly, additional functions will be added such as a summary function and a correlation function.
+This package is currently undergoing a transformation in a few key ways prior to being submitted to CRAN. These package changes can be found in the [pt2023](https://github.com/PBCAR/PThelper/tree/pt2023) branch of GitHub.
+
+First of all, the utility of the existing functions are being altered to provide additional processing capabilities and information for reproducibility purposes. Second, the quality control function (`pt_qc()`) can now process two different types of purchase tasks: i) fully-administered purchase tasks; and ii) purchase tasks administered as an array or only until zero consumption is reached. Third, additional functions have been added such as a summary function (`pt_summary()`) and a correlation function (`pt_corr()`). Fourth, the package calculates the empirical purchase task indicators as well as elasticity and derived intensity internally without the use of external packages.
 
 # The {PThelper} Package
 
