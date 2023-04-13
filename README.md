@@ -292,7 +292,7 @@ OUT <- pt_summary(PT6$data,pt_vars = c("Intensity","Omax","Breakpoint"))
 This function will provide Pearson correlation coefficients and p-values of the purchase task indicators. It can also be used to produce a heatmap (default):
 
 ```
-pt_corr()
+pt_corr(PT6$data[c("Intensity","Elasticity","Omax","Breakpoint","Pmax")])
 ```
 
 ## References
