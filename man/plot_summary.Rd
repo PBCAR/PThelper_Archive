@@ -4,7 +4,7 @@
 \alias{plot_summary}
 \title{PLOT SUMMARY}
 \usage{
-plot_summary(pt, id_var, type = "default", group_var = NULL)
+plot_summary(pt, id_var, type = "overall", group_var = NULL)
 }
 \arguments{
 \item{pt}{A data frame consisting of the purchase variables for each `id_var` (and the grouping variable if `type` equals "group")}

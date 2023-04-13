@@ -12,8 +12,6 @@ utils::globalVariables(c("var","transformation","var_se","var_skew","var_kurtosi
 
 plot_transform <- function(pt, pt_var) {
 
-  se <- function(x){sqrt(var(x[!is.na(x)])/length(x[!is.na(x)]))}
-
  # CREATE TRANSFORMATIONS
 
   names(pt)[names(pt) == pt_var] <- "var_orig"
@@ -46,7 +44,7 @@ plot_transform <- function(pt, pt_var) {
                              var_kurtosis = psych::kurtosi(pt$var_log10, na.rm = T),
                              var_zmin = min(scale(pt$var_log10),na.rm = T),
                              var_zmax = max(scale(pt$var_log10), na.rm = T),
-                             transformation = "Log")
+                             transformation = "Log10")
 
   # SUMMARY STATISTICS: Square Root
   trfmed_sqrt <- data.frame(var_se = se(pt$var_sqrt),
@@ -82,7 +80,6 @@ plot_transform <- function(pt, pt_var) {
           axis.title.y = ggplot2::element_text(size = 15, face = "bold"),
           axis.text = ggplot2::element_text(size = 13)) +
     ggplot2::scale_fill_manual(values = c("#9da6ad","#aeaeb0","#b4a9a9")) +
-    #ggplot2::scale_fill_manual(values = c("#b9bfc4","#c8c8c9","#ccc4c4")) +
     ggplot2::facet_wrap(~transformation, scales = "free") +
     ggplot2::geom_text(trfmed_summary, mapping =
                          ggplot2::aes(label = paste0("SE: ", var_se, "\n Skew: ",

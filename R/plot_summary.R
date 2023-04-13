@@ -15,7 +15,7 @@ utils::globalVariables(c("id","price","measure","group","label","value"))
 #' @return A ggplot2 graphical object
 #' @export
 
-plot_summary <- function(pt, id_var, type = "default", group_var = NULL) {
+plot_summary <- function(pt, id_var, type = "overall", group_var = NULL) {
 
   pt_names <- names(pt)
   prices <- pt_names[pt_names!=id_var]

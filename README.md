@@ -174,7 +174,7 @@ price = c("0","0.05","0.10","0.20","0.30","0.40","0.50","0.75","1","2","3","4","
 Next, since the sample data mimics data that were administered in a 3-price array, the `pt_prep()` function with the 'partial' argument set to TRUE will identify and remove participants who ended on a non-zero consumption (except in the case of the last price administered). Additionally, participants with missing data on all items will be removed.
 
 ```
-PT2 <- pt_prep(PT, id_var = "ID", partial = TRUE)
+PT2 <- pt_prep(PT, id_var = "ID", partial = TRUE, max_val = 99)
 ```
 
 The IDs of those missing data or with a non-zero response will be printed to the console:
@@ -195,7 +195,7 @@ Those in violation of any of the 3 quality control measures are removed, and are
 
 ```
 IDs with a trend violation: 2_A 43_A 68_A
-IDs with a bounce violation: 3_A 10_A
+IDs with a bounce violation: 3_A 10_A 10_B 27_B 45_A 59_A 63_A
 IDs with a reversal violation: 7_B 10_B 14_A 38_B 45_A 51_A 53_B 66_B 73_B
 ```
 
@@ -210,7 +210,7 @@ View(PT3[["qc_data"]])
 An optional step in pre-processing is outlier management of consumption values. Winsorization at the price level can be completed using the `winsor_price()` function:
 
 ```
-PT4 <- winsor_price(PT3$data, id_var = "ID")
+PT4 <- pt_winsor(PT3$data, id_var = "ID")
 ```
 
 The changes made to consumption values are identified by ID and price, which can be seen in the second data frame of returned list:
@@ -229,13 +229,15 @@ plot_summary(PT4$data, id_var = "ID")
 
 The visualization is printed to the 'Plots' pane:
 
+![](examples/plot_summary_ex_plot_overall.png)
 
-## ii) Calculating Elasticity and Derived Values:
 
-Calculating the elasticity curve is achieved using the `pt_elasticity()` function. There are two types of elasticity curves to calculate: Either an "overall"" curve using the mean data of the entire sample; or "individual" curves for each participant:
+## ii) Calculating Empirical and Derived Values:
+
+Calculating the elasticity curve is achieved using the `pt_elasticity()` function. There are two types of elasticity curves to calculate: Either an "overall" curve using the mean data of the entire sample; or "individual" curves for each participant:
 
 ```
-PT5 <- pt_elasticity(PT4$data, id_var = "ID", type = "overall")
+pt_elasticity(PT4$data, id_var = "ID", type = "overall")
 ```
 
 Both types currently use the exponentiated (Koffarnus et al., 2015) equation to calculate demand. If a k-value is not provided by the user, then the best fitting k-value is determined and identified in the console printout:
@@ -247,8 +249,23 @@ R-squared value: 0.99968
 
 An overall curve of the entire sample is provided with this function, which is printed to the 'Plots' pane:
 
+![](examples/pt_elasticity_ex_overall_plot.png)
 
-When the type argument is set to "individual", both derived elasticity and intensity are calculated from the demand curve. Additionally, a spaghetti plot of demand curves is printed to the 'Plots' pane:
+When the type argument is set to "individual", both derived elasticity and intensity are calculated from the demand curve.
+
+```
+PT5 <- pt_elasticity(PT4$data, id_var = "ID", type = "individual")
+```
+
+Additionally, a spaghetti plot of demand curves is printed to the 'Plots' pane:
+
+![](examples/pt_elasticity_ex_individual_plot.png)
+
+The empirical values can be calculated using the `pt_empirical()` function:
+
+```
+PT6 <- pt_empirical(PT5, id_var = "ID")
+```
 
 
 ## iii) Final Processing of Purchase Task Indicators:
@@ -258,13 +275,13 @@ When the type argument is set to "individual", both derived elasticity and inten
 All, none, or some of the index-level variables can undergo winsorization to manage outlying values. Below, the `pt_winsor()` function (used previously for price-level winsorization), is used to manage outlying values of Intensity, Omax, and Breakpoint:
 
 ```
-PT6 <- pt_winsor(PT5, id_var = "ID", level = "indicator", index_vars = c("Intensity","Omax","Breakpoint"), delta = 1)
+PT7 <- pt_winsor(PT6, id_var = "ID", level = "indicator", index_var = "Intensity", delta = 1)
 ```
 
 Any changes made to Intensity, Omax, and Breakpoint are identified by ID and can be seen in the second data frame of returned list:
 
 ```
-View(PT6[["wins_table"]])
+View(PT7[["wins_table"]])
 ```
 
 #### The `plot_transform()` Function:
@@ -272,10 +289,12 @@ View(PT6[["wins_table"]])
 This function provides summary statistics as well as a visualization of distribution of the original variable, alongside two transformations (log10 and square root):
 
 ```
-plot_transform(PT6$data, pt_var = "Intensity")
+plot_transform(PT7$data, pt_var = "Intensity")
 ```
 
 In the presence of zero values in the indicator, a small constant of 0.01 is added prior to log transformation. The visualization is printed to the 'Plots' pane:
+
+![](examples/plot_transform_ex_plot.png)
 
 ## iv) The Post-Processing of Purchase Task Indicators:
 
@@ -284,16 +303,20 @@ In the presence of zero values in the indicator, a small constant of 0.01 is add
 This function will provide summary descriptives (Mean +/- SE, Min, and Max) of the purchase task indicators simultaneously, and can provide summary descriptives by a grouping variable. The function produces a data frame that is easy to export:
 
 ```
-OUT <- pt_summary(PT6$data,pt_vars = c("Intensity","Omax","Breakpoint"))
+OUT <- pt_summary(PT7$data, pt_vars = c("Intensity","Omax","Breakpoint"))
 ```
 
 #### The `pt_corr()` Function:
 
-This function will provide Pearson correlation coefficients and p-values of the purchase task indicators. It can also be used to produce a heatmap (default):
+This function will provide Pearson correlation coefficients and p-values of the purchase task indicators.
 
 ```
-pt_corr(PT6$data[c("Intensity","Elasticity","Omax","Breakpoint","Pmax")])
+CORR <- pt_corr(PT7$data[c("Intensity","Elasticity","Omax","Breakpoint","Pmax")])
 ```
+
+It can also be used to produce a heatmap (default):
+
+![](examples/pt_corr_ex_heatmap.png)
 
 ## References
 
