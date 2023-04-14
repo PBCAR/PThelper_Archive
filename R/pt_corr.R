@@ -71,7 +71,8 @@ pt_corr <- function(pt, heatmap = TRUE, alpha = 0.05, coef_size = 7){
           legend.title = ggplot2::element_text(face = "bold",size = 15, hjust = 0.5),
           legend.direction = "horizontal",
           legend.position = c(0.2,0.8),
-          axis.text = ggplot2::element_text(face = "bold", size = 15),
+          axis.text.y = ggplot2::element_text(face = "bold", size = 15),
+          axis.text.x = ggplot2::element_text(face = "bold", size = 15, angle = 30, vjust = 1, hjust = 1),
           axis.line = ggplot2::element_line(linewidth = 1.5),
           axis.ticks.length = ggplot2::unit(2.5,"mm"),
           axis.ticks = ggplot2::element_line(linewidth = 1)) +
