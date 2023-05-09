@@ -10,8 +10,8 @@ utils::globalVariables(c("id","pred","alpha","q0"))
 #' @param type The type of elasticity curve to derive from the data, one of c("overall","individual"). The default is "overall" which
 #' will calculate overall elasticity for the entire data frame.
 #' @param k The k-value to use for curve fitting. The default is NULL, in which the k-value is calculated from the entire sample, with
-#' k representing the span of consumption in log10 units. Otherwise, a single numerical value can be given as the k-value, allowing for
-#' comparisons across studies, since k influences the calculation of elasticity.
+#' k representing the span of consumption greater than 0 in log10 units. Otherwise, a single numerical value can be given as the k-value,
+#' allowing for comparisons across studies, since k influences the calculation of elasticity.
 #' @param y_type The way the y-axis (prices) are to be displayed. One of c("log10","original"), with "log10" as the default, or
 #' "original" for the existing price values.
 #' @return A ggplot2 graphical object; For `type` "individual", the original pt data frame plus the derived values for each individual
@@ -37,7 +37,7 @@ pt_elasticity <- function(pt, id_var, type, k = NULL, y_type = "log10") {
 
   pt_mean <- stats::aggregate(pt_long[c("q")], by = list(c = pt_long[,"c"]), function(x) mean(x, na.rm = T))
   pt_mean$log_q <- log10(pt_mean$q)
-  k_range <- (max(pt_mean$log_q)-min(pt_mean$log_q))
+  k_range <- (max(pt_mean$log_q)-min(pt_mean$log_q[pt_mean$log_q>0]))
   q0_start <- max(pt_mean$q)
 
   if(is.null(k)){
