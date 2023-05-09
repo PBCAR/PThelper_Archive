@@ -15,8 +15,8 @@ pt_elasticity(pt, id_var, type, k = NULL, y_type = "log10")
 will calculate overall elasticity for the entire data frame.}
 
 \item{k}{The k-value to use for curve fitting. The default is NULL, in which the k-value is calculated from the entire sample, with
-k representing the span of consumption in log10 units. Otherwise, a single numerical value can be given as the k-value, allowing for
-comparisons across studies, since k influences the calculation of elasticity.}
+k representing the span of consumption in log10 units. Otherwise, a single numerical value can be given as the k-value,
+allowing for comparisons across studies, since k influences the calculation of elasticity.}
 
 \item{y_type}{The way the y-axis (prices) are to be displayed. One of c("log10","original"), with "log10" as the default, or
 "original" for the existing price values.}

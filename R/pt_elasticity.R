@@ -57,7 +57,7 @@ pt_elasticity <- function(pt, id_var, type, k = NULL, y_type = "log10") {
     pt_mean$k <- kval
     pt_mean$q0 <- q0_start
 
-    pt_mod_mean <- stats::nls(equation, data = pt_mean, start = list(q0 = q0_start, alpha = 0.001))
+    pt_mod_mean <- stats::nls(equation, data = pt_mean, start = list(q0 = q0_start, alpha = 0.001), control = stats::nls.control(maxiter = 100))
 
     coef_mean <- as.character(stats::coef(pt_mod_mean))
     coef_mean_dat <- data.frame(q0 = coef_mean[1], alpha = coef_mean[2])
@@ -113,7 +113,7 @@ pt_elasticity <- function(pt, id_var, type, k = NULL, y_type = "log10") {
 
       if(pt_dat$q[pt_dat$c==prices[1]]!=0 & pt_dat$q[pt_dat$c==prices[2]]!=0){
 
-        pt_mod_i <- stats::nls(equation, data = pt_dat, start = list(q0 = q0_start_i, alpha = 0.001))
+        pt_mod_i <- stats::nls(equation, data = pt_dat, start = list(q0 = q0_start_i, alpha = 0.001), control = stats::nls.control(maxiter = 100))
 
         pred_i <- stats::predict(pt_mod_i)
         res_i <- stats::resid(pt_mod_i)
