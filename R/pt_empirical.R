@@ -11,7 +11,7 @@ pt_empirical <- function(pt, id_var){
 
   pt_orig <- pt
   pt_names <- names(pt)
-  prices <- pt_names[pt_names!=id_var & pt_names!="Q0" & pt_names!="Elasticity"]
+  prices <- pt_names[pt_names!=id_var & pt_names!="Q0" & pt_names!="Alpha" & pt_names!="R2"]
   names(pt)[names(pt) == id_var] <- "id"
 
   pt <- pt[c("id",prices)]

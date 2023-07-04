@@ -1,0 +1,9 @@
+citHeader("To cite the PThelper package, please use:")
+
+bibentry(bibtype = "manual",
+    title = "PThelper: Package for the Systematic Cleaning, Processing, and Summarizing of Purchase Task Data",
+    author = as.person("Kyla Belisario [aut,], James MacKillop [aut]"),
+    note = "version 2.0.0",
+    year = "2023",
+    url = "http://github.com/PBCAR/PThelper"
+)

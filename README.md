@@ -4,7 +4,7 @@
 
 This package is currently undergoing a transformation in a few key ways prior to being submitted to CRAN. These package changes can be found in the pt2023 branch of GitHub.
 
-First of all, the utility of the existing functions are being altered to provide additional processing capabilities and information for reproducibility purposes. Second, the quality control function (`pt_qc()`) can now process two different types of purchase tasks: i) fully-administered purchase tasks; and ii) purchase tasks administered as an array or only until zero consumption is reached. Third, additional functions have been added such as a summary function (`pt_summary()`) and a correlation function (`pt_corr()`). Fourth, the package calculates the empirical purchase task indicators as well as elasticity and derived intensity internally without the use of external packages.
+First of all, the utility of the existing functions are being altered to provide additional processing capabilities and information for reproducibility purposes. Second, the quality control function (`pt_qc()`) can now process two different types of purchase tasks: i) fully-administered purchase tasks; and ii) purchase tasks administered as an array or only until zero consumption is reached. Third, additional functions have been added such as a summary function (`pt_summary()`) and a correlation function (`pt_corr()`). Fourth, the package calculates the empirical purchase task indicators as well as alpha and derived intensity internally without the use of external packages.
 
 # The {PThelper} Package
 
@@ -14,7 +14,7 @@ The {PThelper} package offers 10 different functions for 3 different stages of p
 
 i)  The pre-processing stage of the raw data;
 
-ii)  The calculation of elasticity and derived indicators stage via curve-fitting;
+ii)  The calculation of alpha and derived indicators stage via curve-fitting;
 
 iii)  The index-level variable management; and
 
@@ -43,7 +43,7 @@ Omax -- The maximum expenditure
 
 Pmax -- The price associated with the maximum total expenditure
 
-!! Elasticity -- Measures sensitivity of consumption to increases in cost
+Alpha -- Rate of change constant in consumption relative to price
 
 ## i) Pre-Processing
 
@@ -100,7 +100,7 @@ iii) Option 3 replaces outliers with a value 1 unit above the next highest non-o
 
 ## ii) Calculating Purchase Task Indicators:
 
-There are two functions which help calculate both the empirical indicators as well as Elasticity for each individual.
+There are two functions which help calculate both the empirical indicators as well as alpha for each individual.
 
 #### a) Empircal Purchase Task Indicators:
 
@@ -108,7 +108,7 @@ The empirical values for Intensity, Breakpoint, Omax, and Pmax are processed usi
 
 #### b) Fitting the Curve:
 
-To calculate elasticity, a non-linear exponentiated curve by Koffarnus et al. (2015) is fit to the price-level data using the `pt_elasticity` function. Elasticity can either be calculated for the entire sample, or by individual, with the appropriate plots of this curve produced. Additionally, the derived Intensity value from the curve (Q0) is also calculated and retained.
+To calculate alpha, a non-linear exponentiated curve by Koffarnus et al. (2015) is fit to the price-level data using the `pt_curve` function. Alpha can either be calculated for the entire sample, or by individual, with the appropriate plots of this curve produced. Additionally, the derived Intensity value from the curve (Q0) is also calculated and retained.
 
 In order to fit the curve, a k-value needs to be assigned in the formula. Either the empirical value of k can be calculated from the mean range of the overall sample, or the researcher can choose the k-value directly (to allow for direct comparisons with other research).
 
@@ -126,7 +126,7 @@ ii) Option 2 replaces outliers with a value 1 unit higher than highest (or 1 uni
 
 iii) Option 3 replaces outliers with a value 1 unit above the next highest non-outlying value to maintain order.
 
-*NOTE:* The unit in Option 3 is user-defined via the `delta` argument. Due to the small nature of elasticity values, a value of 0.001 is recommended.
+*NOTE:* The unit in Option 3 is user-defined via the `delta` argument. Due to the small nature of alpha values, a value of 0.001 is recommended.
 
 #### b) Transformation of Purchase Task Variables (Optional):
 
@@ -234,10 +234,10 @@ The visualization is printed to the 'Plots' pane:
 
 ## ii) Calculating Empirical and Derived Values:
 
-Calculating the elasticity curve is achieved using the `pt_elasticity()` function. There are two types of elasticity curves to calculate: Either an "overall" curve using the mean data of the entire sample; or "individual" curves for each participant:
+Calculating the demand curve is achieved using the `pt_curve()` function. There are two types of demand curves to calculate: Either an "overall" curve using the mean data of the entire sample; or "individual" curves for each participant:
 
 ```
-pt_elasticity(PT4$data, id_var = "ID", type = "overall")
+pt_curve(PT4$data, id_var = "ID", type = "overall")
 ```
 
 Both types currently use the exponentiated (Koffarnus et al., 2015) equation to calculate demand. If a k-value is not provided by the user, then the best fitting k-value is determined and identified in the console printout:
@@ -251,10 +251,10 @@ An overall curve of the entire sample is provided with this function, which is p
 
 ![](examples/pt_elasticity_ex_overall_plot.png)
 
-When the type argument is set to "individual", both derived elasticity and intensity are calculated from the demand curve.
+Both derived alpha and intensity are calculated from the demand curve.
 
 ```
-PT5 <- pt_elasticity(PT4$data, id_var = "ID", type = "individual")
+PT5 <- pt_curve(PT4$data, id_var = "ID", type = "individual")
 ```
 
 Additionally, a spaghetti plot of demand curves is printed to the 'Plots' pane:
@@ -311,7 +311,7 @@ OUT <- pt_summary(PT7$data, pt_vars = c("Intensity","Omax","Breakpoint"))
 This function will provide Pearson correlation coefficients and p-values of the purchase task indicators.
 
 ```
-CORR <- pt_corr(PT7$data[c("Intensity","Elasticity","Omax","Breakpoint","Pmax")])
+CORR <- pt_corr(PT7$data[c("Intensity","Alpha","Omax","Breakpoint","Pmax")])
 ```
 
 It can also be used to produce a heatmap (default):
