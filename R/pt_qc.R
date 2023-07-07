@@ -45,6 +45,18 @@
 #' PT <- pt_qc(cpt_data, id_var = "ID", type = "partial")
 #' @export
 
+### replaces max function to surpress warning
+maxval <- function(x) {if (length(x)>0) max(x) else Inf}
+
+#' MINIMUM VALUES
+#'
+#' @param x An R object.
+#' @export
+
+### replaces min function to surpress warning
+minval <- function(x) {if (length(x)>0) min(x) else Inf}
+
+                       
 pt_qc <- function(pt, id_var, type, delta_q = 0.025, bounce_type = "initial", jump = 0.25, bounce_val = 0.1, rev_n = 0, cons_0 = 1){
 
   pt_names <- names(pt)
