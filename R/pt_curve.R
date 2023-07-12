@@ -1,4 +1,4 @@
-utils::globalVariables(c("id","pred","alpha","q0"))
+utils::globalVariables(c("id","kval","pred","alpha","q0","pmax"))
 
 #' PT CURVE
 #'
@@ -44,13 +44,19 @@ pt_curve <- function(pt, id_var, type, k = NULL, y_type = "log10") {
                     log10(pt_mean$q[pt_mean$c==min(pt_mean$c)])-log10(pt_mean$q[pt_mean$c==max(pt_mean$c[pt_mean$q!=0])]),
                     log10(pt_mean$q[pt_mean$c==min(pt_mean$c)])-log10(pt_mean$q[pt_mean$c==max(pt_mean$c)]))
 
-  q0_start <- pt_mean$q[pt_mean$c==min(pt_mean$c)]
-
   if(is.null(k)){
     kval <- round(k_range,1)
   } else if(!is.null(k)){
     kval <- k
   }
+
+  pt_mean$expenditure <- pt_mean$c*pt_mean$q
+  pt_mean$omax <- max(pt_mean$expenditure)
+
+  pmax_emp <- pt_mean$c[pt_mean$expenditure==pt_mean$omax]
+
+  q0_start <- pt_mean$q[pt_mean$c==min(pt_mean$c)]
+  alpha_start <- -(pracma::lambertWp(-(1/log(10^kval))))/(q0_start*pmax_emp)
 
   equation <- "q ~ q0 * 10^(k * (exp(-alpha * q0 * c)-1))"
 
@@ -62,10 +68,14 @@ pt_curve <- function(pt, id_var, type, k = NULL, y_type = "log10") {
 
     pt_mean$k <- kval
 
-    pt_mod_mean <- stats::nls(equation, data = pt_mean, start = list(q0 = q0_start, alpha = 0.001), control = stats::nls.control(maxiter = 100))
+    pt_mod_mean <- stats::nls(equation, data = pt_mean, start = list(q0 = q0_start, alpha = alpha_start), control = stats::nls.control(maxiter = 100))
 
     coef_mean <- as.character(stats::coef(pt_mod_mean))
     coef_mean_dat <- data.frame(q0 = coef_mean[1], alpha = coef_mean[2])
+
+    pmax <- -(pracma::lambertWp(-(1/log(10^kval))))/(coef_mean_dat$alpha * coef_mean_dat$q0)
+
+    coef_mean_dat$pmax <- pmax
 
     ### Calculate R^2
 
@@ -86,7 +96,8 @@ pt_curve <- function(pt, id_var, type, k = NULL, y_type = "log10") {
       ggplot2::geom_text(data = coef_mean_dat,
                          ggplot2::aes(x = Inf, y = Inf,label = paste0(
                            "\n \u03b1: ", round(as.numeric(alpha), digits = 4),"     ",
-                           "\n Q0: ", round(as.numeric(q0), digits = 5),"     ",
+                           "\n Q0: ", round(as.numeric(q0), digits = 4),"     ",
+                           "\n Pmax: ", round(as.numeric(pmax), digits = 4),"     ",
                            "\n R\u00b2: ", round(as.numeric(rsquared), digits = 4),"     ")), hjust = 1, vjust = 1,
                          size = 7, fontface = "bold", show.legend = F) +
       ggplot2::theme(plot.title = ggplot2::element_text(size = 25, face = "bold", hjust = 0.5),
@@ -108,7 +119,14 @@ pt_curve <- function(pt, id_var, type, k = NULL, y_type = "log10") {
     for(id_num in pt$id){
 
       pt_dat <- pt_long[(pt_long$id == id_num),]
-      q0_start_i <- max(pt_dat$q)
+
+      pt_dat$expenditure <- pt_dat$c*pt_dat$q
+      pt_dat$omax <- max(pt_dat$expenditure)
+
+      pmax_i <- pt_dat$c[pt_dat$expenditure==pt_dat$omax]
+
+      q0_start_i <- pt_dat$q[pt_dat$c==min(pt_dat$c)]
+      alpha_start_i <- -(pracma::lambertWp(-(1/log(10^kval))))/(q0_start_i*pmax_i)
 
       ## Convert any zero values in the first two price points to NA as they will not be adequately fit
       if(pt_dat$q[pt_dat$c==prices[1]]==0 | pt_dat$q[pt_dat$c==prices[2]]==0){
@@ -120,7 +138,7 @@ pt_curve <- function(pt, id_var, type, k = NULL, y_type = "log10") {
 
       if(pt_dat$q[pt_dat$c==prices[1]]!=0 & pt_dat$q[pt_dat$c==prices[2]]!=0){
 
-        pt_mod_i <- stats::nls(equation, data = pt_dat, start = list(q0 = q0_start_i, alpha = 0.001), control = stats::nls.control(maxiter = 100))
+        pt_mod_i <- stats::nls(equation, data = pt_dat, start = list(q0 = q0_start_i, alpha = alpha_start_i), control = stats::nls.control(maxiter = 100))
 
         pred_i <- stats::predict(pt_mod_i)
         res_i <- stats::resid(pt_mod_i)
