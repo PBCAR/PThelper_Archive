@@ -8,7 +8,7 @@ Description: This package introduces a series of steps needed to clean, process,
     to walk users through 3 different stages of purchase task processing: i) The pre-processing stage of the raw data; ii) The calculation of empirical indices and 
     alpha via curve-fitting; and iii) The index-level purchase task variable management.
 License: MIT + file LICENSE
-Imports: stats, psych, ggplot2, reshape2
+Imports: stats, psych, ggplot2, reshape2, pracma
 Depends: R (>= 3.5.0)
 Encoding: UTF-8
 LazyData: true
