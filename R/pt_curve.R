@@ -68,12 +68,12 @@ pt_curve <- function(pt, id_var, type, k = NULL, y_type = "log10") {
 
     pt_mean$k <- kval
 
-    pt_mod_mean <- stats::nls(equation, data = pt_mean, start = list(q0 = q0_start, alpha = alpha_start[length(alpha_start)]), control = stats::nls.control(maxiter = 100))
+    pt_mod_mean <- stats::nls(equation, data = pt_mean, start = list(q0 = q0_start, alpha = alpha_start), control = stats::nls.control(maxiter = 100))
 
     coef_mean <- as.character(stats::coef(pt_mod_mean))
     coef_mean_dat <- data.frame(q0 = coef_mean[1], alpha = coef_mean[2])
 
-    pmax <- -(pracma::lambertWp(-(1/log(10^kval))))/(coef_mean_dat$alpha * coef_mean_dat$q0)
+    pmax <- -(pracma::lambertWp(-(1/log(10^kval))))/(as.numeric(coef_mean_dat$alpha) * as.numeric(coef_mean_dat$q0))
 
     coef_mean_dat$pmax <- pmax
 
@@ -95,10 +95,10 @@ pt_curve <- function(pt, id_var, type, k = NULL, y_type = "log10") {
       ggplot2::ggtitle("Mean Demand Curve") +
       ggplot2::geom_text(data = coef_mean_dat,
                          ggplot2::aes(x = Inf, y = Inf,label = paste0(
-                           "\n \u03b1: ", round(as.numeric(alpha), digits = 4),"     ",
-                           "\n Q0: ", round(as.numeric(q0), digits = 4),"     ",
-                           "\n Pmax: ", round(as.numeric(pmax), digits = 4),"     ",
-                           "\n R\u00b2: ", round(as.numeric(rsquared), digits = 4),"     ")), hjust = 1, vjust = 1,
+                           "\n \u03b1: ", signif(as.numeric(alpha)),"     ",
+                           "\n Q0: ", signif(as.numeric(q0)),"     ",
+                           "\n Pmax: ", signif(as.numeric(pmax)),"     ",
+                           "\n R\u00b2: ", signif(as.numeric(rsquared)),"     ")), hjust = 1, vjust = 1,
                          size = 7, fontface = "bold", show.legend = F) +
       ggplot2::theme(plot.title = ggplot2::element_text(size = 25, face = "bold", hjust = 0.5),
                      axis.title = ggplot2::element_text(size = 22, face = "bold"),
@@ -113,7 +113,8 @@ pt_curve <- function(pt, id_var, type, k = NULL, y_type = "log10") {
   if(type == "individual"){
 
     pt_long$k <- kval
-    pt_elast <- data.frame(id = NULL, q0 = NULL, alpha = NULL)
+    pt_elast <- data.frame(id = NULL, q0 = NULL, alpha = NULL, #pmax = NULL,
+                           r2 = NULL)
     pt_fit <- data.frame(id = NULL, pred = NULL, res = NULL)
 
     for(id_num in pt$id){
@@ -123,22 +124,23 @@ pt_curve <- function(pt, id_var, type, k = NULL, y_type = "log10") {
       pt_dat$expenditure <- pt_dat$c*pt_dat$q
       pt_dat$omax <- max(pt_dat$expenditure)
 
-      pmax_i <- pt_dat$c[pt_dat$expenditure==pt_dat$omax]
+      pmax_emp_i <- min(pt_dat$c[pt_dat$expenditure==pt_dat$omax])
 
       q0_start_i <- pt_dat$q[pt_dat$c==min(pt_dat$c)]
-      alpha_start_i <- -(pracma::lambertWp(-(1/log(10^kval))))/(q0_start_i*pmax_i)
+      alpha_start_i <- -(pracma::lambertWp(-(1/log(10^kval))))/(q0_start_i*pmax_emp_i)
 
       ## Convert any zero values in the first two price points to NA as they will not be adequately fit
       if(pt_dat$q[pt_dat$c==prices[1]]==0 | pt_dat$q[pt_dat$c==prices[2]]==0){
         coef_i <- c(NA,NA)
         res_i <- rep(NA,length(prices))
         pred_i <- rep(NA,length(prices))
+        pmax_i <- NA
         r2_i <- NA
       }
 
       if(pt_dat$q[pt_dat$c==prices[1]]!=0 & pt_dat$q[pt_dat$c==prices[2]]!=0){
 
-        pt_mod_i <- stats::nls(equation, data = pt_dat, start = list(q0 = q0_start_i, alpha = alpha_start_i[length(alpha_start_i)]), control = stats::nls.control(maxiter = 100))
+        pt_mod_i <- stats::nls(equation, data = pt_dat, start = list(q0 = q0_start_i,alpha = mean(c(alpha_start,alpha_start_i))), control = stats::nls.control(maxiter = 100))
 
         pred_i <- stats::predict(pt_mod_i)
         res_i <- stats::resid(pt_mod_i)
@@ -148,9 +150,12 @@ pt_curve <- function(pt, id_var, type, k = NULL, y_type = "log10") {
 
         r2_i <- 1 - sum(stats::resid(pt_mod_i)^2)/ sum((pt_long$q[pt_long$id==id_num] - mean(pt_long$q[pt_long$id==id_num]))^2)
 
+        # pmax_i <- -(pracma::lambertWp(-(1/log(10^kval))))/(as.numeric(coef_i[2]) * as.numeric(coef_i[1]))
+
       }
 
-      id_dat <- data.frame(id = id_num, q0 = coef_i[1], alpha = coef_i[2], r2 = r2_i)
+      id_dat <- data.frame(id = id_num, q0 = coef_i[1], alpha = coef_i[2], #pmax = pmax_i,
+                           r2 = r2_i)
       fit_dat <- data.frame(id = id_num, pred = c(pred_i), res = c(res_i), c = as.numeric(prices))
 
       pt_elast <- rbind(pt_elast,id_dat)
@@ -174,9 +179,10 @@ pt_curve <- function(pt, id_var, type, k = NULL, y_type = "log10") {
 
     ### PREPARE data for export
 
-    pt_elast$q0 <- round(as.numeric(pt_elast$q0),2)
-    pt_elast$alpha <- round(as.numeric(pt_elast$alpha),4)
-    colnames(pt_elast) <- c("id","Q0","Alpha","R2")
+    pt_elast$q0 <- signif(as.numeric(pt_elast$q0))
+    pt_elast$alpha <- signif(as.numeric(pt_elast$alpha))
+    colnames(pt_elast) <- c("id","Q0","Alpha",# "Pmax"
+                            "R2")
 
     }
 
