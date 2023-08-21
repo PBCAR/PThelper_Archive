@@ -1,32 +1,41 @@
-#' PT PREP
+#' `pt_prep()`
 #'
-#' This function helps users prep their data by: i) identifying and removing participants with missing responses across all items;
-#' ii) (optional) re-assigning the maximum value allowed at any price point; and for purchase tasks which are not administered in
-#' full, iii) identifying and removing participants who do not have zero consumption at the final price point (except in instances
-#' of the final price point being reached).
+#' This function helps users prepare their full or partial purchase task data by:
+#'
+#' i) identifying and removing participants with missing responses across all items;
+#' ii) (optional) identifying and removing participants with zero consumption across all items;
+#' iii) (optional) re-assigning the maximum value allowed at any price point;
+#' iv) (for purchase tasks which are not administered in full) identifying and removing participants who do not have zero consumption at the final price point (except in instances of the final price point being reached).
 #'
 #' @param pt A data frame consisting of the `id_var` and purchase task variables.
 #' @param id_var The name of the unique identifier (ID) as found in the data frame.
+#' @param remove0 Whether those with zero consumption across all items should be removed. The default is `TRUE`.
 #' @param max_val Optional identification of a maximum allowed response for any given price point.
-#' @param partial Optional logical statement whether the purchase task administered was not administered in full. Default is
-#' FALSE. If partial is set to TRUE, then individuals whose last non-missing price does not equate to zero are identified (and removed).
 #' @examples
-#' pt <- pt_prep(cpt_data, id_var = "ID", max_val = 99, partial = TRUE)
-#' @return A data frame with the length of participants who reach zero consumption (except at final price point administered)
+#'
+#' ##### Load Data
+#' data("cpt_data")
+#'
+#' ##### Prep Data
+#' pt <- price_prep(cpt_data, id_var = "ID", vars = c(paste0("cpt",1:15)),
+#' prices = c("0","0.05","0.10","0.20","0.30","0.40","0.50", "0.75","1","2","3","4","5","7.5","10"))
+#'
+#' ##### Function Example
+#' pt2 <- pt_prep(pt, id_var = "ID", remove0 = FALSE, max_val = 99)
+#'
+#' @return A data frame with the length of participants not identified as removed.
 #' @export
 
+pt_prep <- function(pt, id_var, remove0 = TRUE, max_val = NULL) {
 
-pt_prep <- function(pt, id_var, max_val = NULL, partial = FALSE) {
-
-  pt_names <- names(pt)
-  prices <- pt_names[pt_names!=id_var]
+  prices <- names(pt)[names(pt)!=id_var]
   names(pt)[names(pt) == id_var] <- "id"
 
   ### WARNING: Duplicate IDs are not allowed
 
   dupe_id <- unique(pt$id)
 
-  if(length(dupe_id)!=length(pt$id)) stop("Duplicate IDs detected!")
+  if(length(dupe_id)!=length(pt$id)) stop(rlang::format_error_bullets(c( x = "Duplicate IDs detected!")), call. = FALSE)
 
   ##### ----- MAX VALUE
 
@@ -48,11 +57,29 @@ pt_prep <- function(pt, id_var, max_val = NULL, partial = FALSE) {
 
     pt <- pt[!(pt$id %in% remove.id.missing),]
 
+      if(remove0==TRUE){
+
+        ##### ----- OPTIONAL: IDENTIFY & REMOVE IDs with zero consumption on all price points
+
+        remove.id.zero <- {}
+        for (id_num in pt$id){
+          prices_i <- names(pt[(pt$id==id_num),][prices])[!is.na(pt[(pt$id==id_num),][prices])]
+          if (sum(!is.na(pt[pt[,"id"]==id_num,][prices]) & pt[pt[,"id"]==id_num,][prices]==0)==length(prices_i)){
+            remove.id.zero <- append(remove.id.zero, id_num)
+          }
+        }
+
+      pt <- pt[!(pt$id %in% remove.id.zero),]
+
+      }
+
+    if(remove0==FALSE){
+      remove.id.zero <- NULL
+    }
+
   ##### ----- IDENTIFY & REMOVE IDs with final non-zero consumption (except in the instance of the maximum price point)
 
   remove.id.nonzero <- {}
-
-  maxval <- function(x) {if (length(x)>0) max(x) else Inf}
 
   pt$max_price <- apply(pt[ ,prices], 1, function(x) {names(x)[maxval(which(!is.na(x)))] })
   pt$max_cons <- match(pt$max_price,prices)
@@ -66,10 +93,25 @@ pt_prep <- function(pt, id_var, max_val = NULL, partial = FALSE) {
   pt <- pt[!(pt$id %in% remove.id.nonzero),]
 
   if(length(remove.id.missing)==0) (remove.id.missing <- "NULL")
+  if(length(remove.id.zero)==0) (remove.id.zero <- "NULL")
   if(length(remove.id.nonzero)==0) (remove.id.nonzero <- "NULL")
 
-  cat(" IDs with Missing Values: ", remove.id.missing,
-      "\n","IDs not reaching zero consumption (does not include IDs who reach max item): ",remove.id.nonzero, "\n")
+  if(remove0==TRUE){
+  message(rlang::format_error_bullets(c( i = c("IDs with Missing Values:"),
+                                         " " = c(paste(remove.id.missing, collapse = ",")),
+                                         i = c("IDs with zero consumption:"),
+                                         " " = c(paste(remove.id.zero, collapse = ",")),
+                                         i = c("IDs not reaching zero consumption (does not include IDs who reach max item):"),
+                                         " " = c(paste(remove.id.nonzero, collapse = ",")))))
+  }
+
+  if(remove0==FALSE){
+    message(rlang::format_error_bullets(c( i = c("IDs with Missing Values:"),
+                                           " " = c(paste(remove.id.missing, collapse = ",")),
+                                           i = c("IDs not reaching zero consumption (does not include IDs who reach max item):"),
+                                           " " = c(paste(remove.id.nonzero, collapse = ",")))))
+
+  }
 
   pt <- pt[c("id",prices)]
   names(pt)[names(pt) == "id"] <- id_var

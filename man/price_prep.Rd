@@ -2,7 +2,7 @@
 % Please edit documentation in R/price_prep.R
 \name{price_prep}
 \alias{price_prep}
-\title{PRICE PREP}
+\title{`price_prep()`}
 \usage{
 price_prep(pt, id_var, vars, prices)
 }
@@ -11,19 +11,22 @@ price_prep(pt, id_var, vars, prices)
 
 \item{id_var}{The name of the unique identifier (ID) as identified in the data frame.}
 
-\item{vars}{The names of variables which make up the purchase task.}
+\item{vars}{The variable names of the purchase task items.}
 
-\item{prices}{The prices associated with each variable name in the same order as the `vars`.}
+\item{prices}{The prices associated with each purchase task item in the same order as the `vars`.}
 }
 \value{
-A data frame with `vars` variables renamed, as well as `id_var`
+A data frame consisting of the `vars` variables renamed as `prices`, as well as `id_var`.
 }
 \description{
-This function helps users efficiently rename their variables as prices, which is essential to processing purchase task data.
-At the same time, it will return only the variables required for purchase task processing -- the unique identifier and the
-purchase task variables themselves.
+This function helps users efficiently rename their variables as prices. At the same time, it will return only the
+variables required for purchase task processing -- the unique identifier and the purchase task variables themselves.
 }
 \examples{
+
+### --- Function example using package data `cpt_data`
+data(cpt_data)
 pt <- price_prep(cpt_data, id_var = "ID", vars = c(paste0("cpt",1:15)),
 prices = c("0","0.05","0.10","0.20","0.30","0.40","0.50", "0.75","1","2","3","4","5","7.5","10"))
+
 }

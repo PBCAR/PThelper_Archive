@@ -1,17 +1,28 @@
 utils::globalVariables(c("id","price","measure","group","label","value"))
 
-#' PLOT SUMMARY
+#' `plot_summary()`
 #'
-#' This function helps users to inspect the price-level purchase task data by
-#' visualizing the mean and standard error of both consumption and expenditure.
+#' This function helps users to inspect the price-level purchase task data by visualizing the mean and standard error of both consumption and expenditure.
 #'
 #' @param pt A data frame consisting of the purchase variables for each `id_var` (and the grouping variable if `type` equals "group")
 #' @param id_var The name of the unique identifier (ID) as found in the data frame.
-#' @param type The type of plot to produce. One of c("overall","group","individual"). The default is "overall" and provides a summary
-#' of all individuals in the data frame. The "group" type provides a summary of consumption and expenditure by grouping variable. If
-#' wanting to produce individual plots by each ID, then the "individual" type of plot should be selected, as this will visualize
-#' all participants' consumption and expenditure in a spaghetti plot.
+#' @param type The type of plot to produce. One of c("overall","group"). The default is "overall" and provides a summary
+#' of all individuals in the data frame. The "group" type provides a summary of consumption and expenditure by grouping variable.
 #' @param group_var The grouping variable if using type "group".
+#' @examples
+#' ##### Load Data
+#' data("cpt_data")
+#'
+#' ##### Prep Data
+#' pt <- price_prep(cpt_data, id_var = "ID", vars = c(paste0("cpt",1:15)),
+#' prices = c("0","0.05","0.10","0.20","0.30","0.40","0.50", "0.75","1","2","3","4","5","7.5","10"))
+#'
+#' pt2 <- pt_prep(pt, id_var = "ID", remove0 = TRUE, max_val = 99)
+#' pt3 <- pt_qc(pt2, id_var = "ID", type = "partial", bounce_type = "p2p")
+#'
+#' ##### Function Example
+#' plot_summary(pt3$data, id_var = "ID")
+#'
 #' @return A ggplot2 graphical object
 #' @export
 
@@ -39,14 +50,11 @@ plot_summary <- function(pt, id_var, type = "overall", group_var = NULL) {
 
   if(type=="overall"){
 
-  pt_consume_mean <- stats::aggregate(pt_long$consume, by = list(pt_long$price), FUN = mean)
-  pt_consume_se <- stats::aggregate(pt_long$consume, by = list(pt_long$price), FUN = se)
+  pt_consume_mean <- stats::aggregate(pt_long[c("consume")], by = list(price = pt_long[,"price"]), FUN = mean)
+  pt_consume_se <- stats::aggregate(pt_long[c("consume")], by = list(price = pt_long[,"price"]), FUN = se)
 
-  names(pt_consume_mean)[names(pt_consume_mean)=="x"] <- "mean"
-  names(pt_consume_mean)[names(pt_consume_mean)=="Group.1"] <- "price"
-
-  names(pt_consume_se)[names(pt_consume_se)=="x"] <- "se"
-  names(pt_consume_se)[names(pt_consume_se)=="Group.1"] <- "price"
+  names(pt_consume_mean)[names(pt_consume_mean)=="consume"] <- "mean"
+  names(pt_consume_se)[names(pt_consume_se)=="consume"] <- "se"
 
   pt_consume <- merge(pt_consume_mean, pt_consume_se , by = "price")
   pt_consume$price <- as.numeric(pt_consume$price)
@@ -55,14 +63,11 @@ plot_summary <- function(pt, id_var, type = "overall", group_var = NULL) {
   ### EXPENDITURE calculation:
   pt_long$spend <- as.numeric(pt_long$price)*as.numeric(pt_long$consume)
 
-  pt_spend_mean <- stats::aggregate(pt_long$spend, by = list(pt_long$price), FUN = mean)
-  pt_spend_se <- stats::aggregate(pt_long$spend, by = list(pt_long$price), FUN = se)
+  pt_spend_mean <- stats::aggregate(pt_long[c("spend")], by = list(price = pt_long[,"price"]), FUN = mean)
+  pt_spend_se <- stats::aggregate(pt_long[c("spend")], by = list(price = pt_long[,"price"]), FUN = se)
 
-  names(pt_spend_mean)[names(pt_spend_mean)=="x"] <- "mean"
-  names(pt_spend_mean)[names(pt_spend_mean)=="Group.1"] <- "price"
-
-  names(pt_spend_se)[names(pt_spend_se)=="x"] <- "se"
-  names(pt_spend_se)[names(pt_spend_se)=="Group.1"] <- "price"
+  names(pt_spend_mean)[names(pt_spend_mean)=="spend"] <- "mean"
+  names(pt_spend_se)[names(pt_spend_se)=="spend"] <- "se"
 
   pt_spend <- merge(pt_spend_mean, pt_spend_se, by = "price")
   pt_spend$price <- as.numeric(pt_spend$price)
@@ -117,16 +122,8 @@ plot_summary <- function(pt, id_var, type = "overall", group_var = NULL) {
 
   if(type=="group"){
 
-    pt_consume_mean <- stats::aggregate(pt_long$consume, by = list(pt_long$price, pt_long$group), FUN = mean)
-    pt_consume_se <- stats::aggregate(pt_long$consume, by = list(pt_long$price, pt_long$group), FUN = se)
-
-    names(pt_consume_mean)[names(pt_consume_mean)=="x"] <- "mean"
-    names(pt_consume_mean)[names(pt_consume_mean)=="Group.1"] <- "price"
-    names(pt_consume_mean)[names(pt_consume_mean)=="Group.2"] <- "group"
-
-    names(pt_consume_se)[names(pt_consume_se)=="x"] <- "se"
-    names(pt_consume_se)[names(pt_consume_se)=="Group.1"] <- "price"
-    names(pt_consume_se)[names(pt_consume_se)=="Group.2"] <- "group"
+    pt_consume_mean <- stats::aggregate(pt_long[c("consume")], by = list(price = pt_long[c("price")], group = pt_long[c("group")]), FUN = mean)
+    pt_consume_se <- stats::aggregate(pt_long[c("consume")], by = list(price = pt_long[c("price")], group = pt_long[c("group")]), FUN = se)
 
     pt_consume <- merge(pt_consume_mean, pt_consume_se , by = c("price","group"))
     pt_consume$price <- as.numeric(pt_consume$price)
@@ -135,16 +132,8 @@ plot_summary <- function(pt, id_var, type = "overall", group_var = NULL) {
     ### EXPENDITURE calculation:
     pt_long$spend <- as.numeric(pt_long$price)*pt_long$consume
 
-    pt_spend_mean <- stats::aggregate(pt_long$spend, by = list(pt_long$price, pt_long$group), FUN = mean)
-    pt_spend_se <- stats::aggregate(pt_long$spend, by = list(pt_long$price, pt_long$group), FUN = se)
-
-    names(pt_spend_mean)[names(pt_spend_mean)=="x"] <- "mean"
-    names(pt_spend_mean)[names(pt_spend_mean)=="Group.1"] <- "price"
-    names(pt_spend_mean)[names(pt_spend_mean)=="Group.2"] <- "group"
-
-    names(pt_spend_se)[names(pt_spend_se)=="x"] <- "se"
-    names(pt_spend_se)[names(pt_spend_se)=="Group.1"] <- "price"
-    names(pt_spend_se)[names(pt_spend_se)=="Group.2"] <- "group"
+    pt_spend_mean <- stats::aggregate(pt_long[c("spend")], by = list(price = pt_long[c("price")], pt_long[c("group")]), FUN = mean)
+    pt_spend_se <- stats::aggregate(pt_long$spend, by = list(price = pt_long[c("price")], pt_long[c("group")]), FUN = se)
 
     pt_spend <- merge(pt_spend_mean, pt_spend_se, by = c("price","group"))
     pt_spend$price <- as.numeric(pt_spend$price)
@@ -193,42 +182,6 @@ plot_summary <- function(pt, id_var, type = "overall", group_var = NULL) {
 
   }
 
-  ### --- INDIVIDUAL PLOT
-  if(type=="individual"){
-
-    pt_long$price <- as.numeric(pt_long$price)
-    ### EXPENDITURE calculation:
-    pt_long$spend <- as.numeric(pt_long$price)*as.numeric(pt_long$consume)
-
-    pt_consume <- pt_long[c("id","price","consume")]
-    names(pt_consume) <- c("id","price","value")
-    pt_consume$measure <- "Consumption"
-
-    pt_spend <- pt_long[c("id","price","spend")]
-    names(pt_spend) <- c("id","price","value")
-    pt_spend$measure <- "Expenditure"
-
-    pt_summ  <- rbind(pt_consume, pt_spend)
-
-    pt_plot <- ggplot2::ggplot(pt_summ, ggplot2::aes(x = factor(price), y = value, group = id)) +
-      ggplot2::geom_line(linewidth = 1, alpha = 0.7,colour = "#999999",show.legend = FALSE) +
-      ggplot2::theme_classic() + ggplot2::xlab("\n Price") +
-      ggplot2::scale_x_discrete(breaks = factor(pt_spend$price),
-                                expand = c(0.025,0.025,0.025,0.025)) +
-      ggplot2::facet_wrap(~measure, scales = "free_y", ncol = 1) +
-      ggplot2::theme(strip.text = ggplot2::element_text(size = 25,face = "bold", hjust = 0.5),
-                     strip.background = ggplot2::element_blank(),
-                     plot.title = ggplot2::element_blank(),
-                     axis.title.x = ggplot2::element_text(size = 22, face = "bold"),
-                     axis.title.y = ggplot2::element_blank(),
-                     axis.text.x = ggplot2::element_text(size = 19, angle = 30, vjust = 0.5),
-                     axis.ticks = ggplot2::element_line(linewidth = 1),
-                     axis.text.y = ggplot2::element_text(size = 19),
-                     axis.line = ggplot2::element_line(linewidth = 1.5),
-                     axis.ticks.length = ggplot2::unit(2.5,"mm"))
-
-  }
-
-  pt_plot
+  print(pt_plot)
 
   }

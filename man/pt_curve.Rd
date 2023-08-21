@@ -2,32 +2,57 @@
 % Please edit documentation in R/pt_curve.R
 \name{pt_curve}
 \alias{pt_curve}
-\title{PT CURVE}
+\title{`pt_curve()`}
 \usage{
-pt_curve(pt, id_var, type, k = NULL, y_type = "log10")
+pt_curve(
+  pt,
+  id_var,
+  type = c("overall", "group", "individual"),
+  k = NULL,
+  group_var = NULL,
+  n_start = 10
+)
 }
 \arguments{
 \item{pt}{A data frame consisting of the `id_var` and purchase task variables.}
 
 \item{id_var}{The name of the unique identifier as identified in the data frame.}
 
-\item{type}{The type of demand curve to derive from the data, one of c("overall","individual"). The default is "overall" which
-will calculate overall demand for the entire data frame.}
+\item{type}{The level for fitting the demand curves, one of c("overall","group","individual"). The default is "overall" which will calculate
+overall demand for the entire data frame. For `type` "group", equation-derived demand indicators for each of the groups as identified by the `group_var`
+are visualized. When `type` equals "individual", equation-derived demand indicators are calculated for each individual as identified by `id_var`.}
 
-\item{k}{The k-value to use for curve fitting. The default is NULL, in which the k-value is calculated from the entire sample, with
-k representing the span of consumption in log10 units. Otherwise, a single numerical value can be given as the k-value,
+\item{k}{The k-value to use in the exponentiated demand equation. The default is NULL, in which the k-value is calculated from the entire sample,
+with k representing the span of consumption in log10 units. Otherwise, a single numerical value can be given as the k-value,
 allowing for comparisons across studies, since k influences the calculation of alpha. When k is calculated from the entire sample,
 it is calculated using the mean average consumption at the lowest and highest price points and in instances when the mean average consumption
 at the highest price point is 0, the lowest non-zero mean consumption is used.}
 
-\item{y_type}{The way the y-axis (prices) are to be displayed. One of c("log10","original"), with "log10" as the default, or
-"original" for the existing price values.}
+\item{group_var}{The name of the grouping variable when `type` equals "group".}
+
+\item{n_start}{The number of starting values of alpha to use for fitting the demand curve when type `equals` "individual". The default is 10, which means}
 }
 \value{
-A ggplot2 graphical object; For `type` "individual", the original pt data frame plus the derived values for each individual
-is returned.
+A ggplot2 graphical object; For `type` "individual", the original pt data frame plus the derived values for each individual is returned.
 }
 \description{
-This function derives and visualizes alpha using the Koffarnus, Franck, Stein, and Bickel (2015) exponentiated equation. Alpha
-(rate of change constant) can be derived for the entire sample or for individuals. This function will also visualize the demand curve(s).
+This function derives demand functions using the Koffarnus, Franck, Stein, and Bickel, (2015) exponentiated equation. The derived demand indicators from
+these models can be calculated for the entire sample, for sub-groups (using a grouping variable), or for individuals. Visualizations are produced of the
+mean aggregate demand curves when the `type` is either "overall" or "group".
+}
+\examples{
+
+##### Load Data
+data("cpt_data")
+
+##### Prep Data
+pt <- price_prep(cpt_data, id_var = "ID", vars = c(paste0("cpt",1:15)),
+prices = c("0","0.05","0.10","0.20","0.30","0.40","0.50", "0.75","1","2","3","4","5","7.5","10"))
+
+pt2 <- pt_prep(pt, id_var = "ID", remove0 = TRUE, max_val = 99)
+pt3 <- pt_qc(pt2, id_var = "ID", type = "partial", bounce_type = "p2p")
+
+##### Function Example
+pt4 <- pt_curve(pt3$data, id_var = "ID", type = "individual")
+
 }

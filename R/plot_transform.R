@@ -1,12 +1,22 @@
 utils::globalVariables(c("var","transformation","var_se","var_skew","var_kurtosis","var_zmin","var_zmax"))
 
-#' PLOT TRANSFORM
+#' `plot_transform()`
 #'
 #' This function helps users to visualize their purchase task (index-level) variables to determine whether a transformation of
 #' log10 or square-root would be best to use.
 #'
 #' @param pt A data frame consisting of the purchase variable `pt_var` to visualize.
 #' @param pt_var The name of the purchase task index-level variable to visualize, as identified in the data frame.
+#' @examples
+#'
+#' ##### Example Data
+#' pt <- data.frame("ID" = c(1:36),
+#' "Intensity" = c(10,12,15,0,99,11,7,6,12,7,8,10,5,6,10,0,3,7,5,0,2,3,5,6,10,15,12,7,0,9,0,6,7,8,4,5),
+#' "Breakpoint" = c(1,2,5,0,10,3,0.5,0.2,0.3,3,4,5,7.5,0.5,2,0,0.1,0.5,0.5,0,3,2,2,1,2,3,4,1,0,2,0,5,5,7.5,2,3))
+#'
+#' ##### Function Example
+#' plot_transform(pt,pt_var = "Breakpoint")
+#'
 #' @return A ggplot2 graphical object
 #' @export
 

@@ -2,7 +2,7 @@
 % Please edit documentation in R/plot_transform.R
 \name{plot_transform}
 \alias{plot_transform}
-\title{PLOT TRANSFORM}
+\title{`plot_transform()`}
 \usage{
 plot_transform(pt, pt_var)
 }
@@ -17,4 +17,15 @@ A ggplot2 graphical object
 \description{
 This function helps users to visualize their purchase task (index-level) variables to determine whether a transformation of
 log10 or square-root would be best to use.
+}
+\examples{
+
+##### Example Data
+pt <- data.frame("ID" = c(1:30),
+"Intensity" = c(10,12,15,0,99,11,7,6,12,7,8,10,5,6,10,0,3,7,5,0,20,30,5,6,10,15,12,7,0,9),
+"Breakpoint" = c(1,2,5,0,10,3,0.5,0.2,0.3,3,4,5,7.5,0.5,2,0,0.1,0.5,0.5,0,10,10,2,1,2,3,4,1,0,2))
+
+##### Function Example
+plot_transform(pt,pt_var = "Breakpoint")
+
 }

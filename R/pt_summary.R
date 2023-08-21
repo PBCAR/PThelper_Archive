@@ -1,17 +1,21 @@
-#' PT SUMMARY
+#' `pt_summary()`
 #'
 #' This function provides basic summary descriptives of the variables. This function can also provide summary by a grouping variable.
 #'
 #' @param pt A data frame consisting of the purchase variables `pt_vars` to summarize.
 #' @param pt_vars The purchase task variables to summarize.
 #' @param group An optional grouping variable to summarize the purchase task variables by.
-#' @return An object of type data frame
 #' @examples
-#' ### ---------- Data Prep:
-#' cpt_data$AB <- ifelse(grepl("A",cpt_data$ID),"A","B")
 #'
-#' ### --------- Descriptive Stats by Group
-#' data_summ <- pt_summary(cpt_data, pt_vars = c("cpt1","cpt2","cpt3"), group = "AB")
+#' ##### Example Data
+#' pt <- data.frame("ID" = c(1:36),
+#' "Intensity" = c(10,12,15,0,99,11,7,6,12,7,8,10,5,6,10,0,3,7,5,0,2,3,5,6,10,15,12,7,0,9,0,6,7,8,4,5),
+#' "Breakpoint" = c(1,2,5,0,10,3,0.5,0.2,0.3,3,4,5,7.5,0.5,2,0,0.1,0.5,0.5,0,3,2,2,1,2,3,4,1,0,2,0,5,5,7.5,2,3))
+#'
+#' ##### Function Example
+#' pt_summary(pt, pt_vars = c("Intensity","Breakpoint"))
+#'
+#' @return An object of type data frame
 #' @export
 
 pt_summary <- function(pt, pt_vars, group = NULL){

@@ -2,29 +2,41 @@
 % Please edit documentation in R/pt_prep.R
 \name{pt_prep}
 \alias{pt_prep}
-\title{PT PREP}
+\title{`pt_prep()`}
 \usage{
-pt_prep(pt, id_var, max_val = NULL, partial = FALSE)
+pt_prep(pt, id_var, remove0 = TRUE, max_val = NULL)
 }
 \arguments{
 \item{pt}{A data frame consisting of the `id_var` and purchase task variables.}
 
 \item{id_var}{The name of the unique identifier (ID) as found in the data frame.}
 
-\item{max_val}{Optional identification of a maximum allowed response for any given price point.}
+\item{remove0}{Whether those with zero consumption across all items should be removed. The default is `TRUE`.}
 
-\item{partial}{Optional logical statement whether the purchase task administered was not administered in full. Default is
-FALSE. If partial is set to TRUE, then individuals whose last non-missing price does not equate to zero are identified (and removed).}
+\item{max_val}{Optional identification of a maximum allowed response for any given price point.}
 }
 \value{
-A data frame with the length of participants who reach zero consumption (except at final price point administered)
+A data frame with the length of participants not identified as removed.
 }
 \description{
-This function helps users prep their data by: i) identifying and removing participants with missing responses across all items;
-ii) (optional) re-assigning the maximum value allowed at any price point; and for purchase tasks which are not administered in
-full, iii) identifying and removing participants who do not have zero consumption at the final price point (except in instances
-of the final price point being reached).
+This function helps users prepare their full or partial purchase task data by:
+}
+\details{
+i) identifying and removing participants with missing responses across all items;
+ii) (optional) identifying and removing participants with zero consumption across all items;
+iii) (optional) re-assigning the maximum value allowed at any price point;
+iv) (for purchase tasks which are not administered in full) identifying and removing participants who do not have zero consumption at the final price point (except in instances of the final price point being reached).
 }
 \examples{
-pt <- pt_prep(cpt_data, id_var = "ID", max_val = 99, partial = TRUE)
+
+##### Load Data
+data("cpt_data")
+
+##### Prep Data
+pt <- price_prep(cpt_data, id_var = "ID", vars = c(paste0("cpt",1:15)),
+prices = c("0","0.05","0.10","0.20","0.30","0.40","0.50", "0.75","1","2","3","4","5","7.5","10"))
+
+##### Function Example
+pt2 <- pt_prep(pt, id_var = "ID", remove0 = TRUE, max_val = 99)
+
 }

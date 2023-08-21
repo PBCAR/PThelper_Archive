@@ -2,7 +2,7 @@
 % Please edit documentation in R/pt_summary.R
 \name{pt_summary}
 \alias{pt_summary}
-\title{PT SUMMARY}
+\title{`pt_summary()`}
 \usage{
 pt_summary(pt, pt_vars, group = NULL)
 }
@@ -20,9 +20,13 @@ An object of type data frame
 This function provides basic summary descriptives of the variables. This function can also provide summary by a grouping variable.
 }
 \examples{
-### ---------- Data Prep:
-cpt_data$AB <- ifelse(grepl("A",cpt_data$ID),"A","B")
 
-### --------- Descriptive Stats by Group
-data_summ <- pt_summary(cpt_data, pt_vars = c("cpt1","cpt2","cpt3"), group = "AB")
+##### Example Data
+pt <- data.frame("ID" = c(1:30),
+"Intensity" = c(10,12,15,0,99,11,7,6,12,7,8,10,5,6,10,0,3,7,5,0,20,30,5,6,10,15,12,7,0,9),
+"Breakpoint" = c(1,2,5,0,10,3,0.5,0.2,0.3,3,4,5,7.5,0.5,2,0,0.1,0.5,0.5,0,10,10,2,1,2,3,4,1,0,2))
+
+##### Function Example
+pt_summary(pt, pt_vars = c("Intensity","Breakpoint"))
+
 }

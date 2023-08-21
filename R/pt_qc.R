@@ -1,10 +1,16 @@
-#' PT QC
+#' `pt_qc()`
 #'
-#' This function helps users to conduct quality control on purchase task data to remove non-systematic data. Specifically, this function
-#' identifies and removes IDs with: i) trend violations; ii) excessive bounce ratios; and iii) excessive reversals in responses. Quality
-#' control options follow the proposed 3-criterion method by Stein et al. (2015), but also allow for customization. Additionally, quality
-#' control can be applied to purchase task data in which not all prices were administered, such as in the case that administration of the
-#' purchase task ceased after first breakpoint, or after zero consumption was reached within a price array.
+#' This function helps users to conduct quality control on purchase task data to remove non-systematic data.
+#'
+#' Specifically, this function identifies and removes IDs with:
+#'
+#' i) trend violations;
+#' ii) excessive bounce ratios; and
+#' iii) excessive reversals in responses.
+#'
+#' Quality control options follow the proposed 3-criterion method by Stein et al. (2015), but also allow for customization. Additionally,
+#' quality control can be applied to purchase task data in which not all prices were administered, such as in the case that administration
+#' of the purchase task ceased after first breakpoint, or after zero consumption was reached within a price array.
 #'
 #' Stein, J. S., Koffarnus, M. N., Snider, S. E., Quisenberry, A. J., & Bickel, W. K. (2015).
 #' Identification and management of nonsystematic purchase task data: Toward best practice.
@@ -24,31 +30,38 @@
 #' defines what constitutes a `jump`, with all subsequent prices in the purchase task being compared to the consumption at the first
 #' price. The "p2p" option is a proposed alternative, which considers any increases in consumption from one price to the next to be a
 #'  `jump` in consumption. Both methods make use of the `bounce_val` which will only exclude participants above a set threshold of jumps.
+#' @param bounce_val Expressed as a proportion, the bounce value is used as a threshold to identify excessive inconsistencies in
+#' responses. The default bounce value is 0.1. IDs exceeding this bounce value are removed.
 #' @param jump Expressed as a proportion, the jump value is the percent increase in consumption at first price used to define an
 #' excessive increase in consumption. The default is 0.25 (25% as suggested by Stein et al., 2015), meaning that any consumption 25%
 #' higher than consumption at first price would be considered an excessive jump in consumption when using the `bounce_type` "initial".
-#' @param bounce_val Expressed as a proportion, the bounce value is used as a threshold to identify excessive inconsistencies in
-#' responses. The default bounce value is 0.1. IDs exceeding this bounce value are removed.
 #' @param rev_n The number of acceptable reversals from zero, one of c(0,1). The default number is 0, meaning no reversals from zero
 #' are allowed.
 #' @param cons_0 The number of consecutive zeroes to signify a reversal from zero, one of c(1,2). The default is 1.
-#' @return A list consisting of two data frames: "data" which consists of the `id_var` and purchase task variables, and the
-#' "qc_data" which provides details on the results of the quality control for all IDs.
 #' @examples
-#' ### ---------- PT PREP:
-#' cpt_data <- price_prep(cpt_data, id_var = "ID", vars = c(paste0("cpt",1:15)),
-#' price = c("0","0.05","0.10","0.20","0.30","0.40","0.50","0.75","1","2","3","4","5","7.5","10"))
 #'
-#' cpt_data <- pt_prep(cpt_data, id_var = "ID", partial = TRUE)
+#' ##### Load Data
+#' data("cpt_data")
 #'
-#' ### ---------- PT QC:
-#' PT <- pt_qc(cpt_data, id_var = "ID", type = "partial")
+#' ##### Prep Data
+#' pt <- price_prep(cpt_data, id_var = "ID", vars = c(paste0("cpt",1:15)),
+#' prices = c("0","0.05","0.10","0.20","0.30","0.40","0.50", "0.75","1","2","3","4","5","7.5","10"))
+#'
+#' pt2 <- pt_prep(pt, id_var = "ID", remove0 = TRUE, max_val = 99)
+#'
+#' ##### Function Example
+#' pt3 <- pt_qc(pt2, id_var = "ID", type = "partial", bounce_type = "p2p")
+#'
+#' @return A list consisting of two data frames: "data" which consists of the `id_var` and purchase task variables, and
+#' "qc_data" which provides details on the results of quality control for all IDs.
 #' @export
 
-pt_qc <- function(pt, id_var, type, delta_q = 0.025, bounce_type = "initial", jump = 0.25, bounce_val = 0.1, rev_n = 0, cons_0 = 1){
+pt_qc <- function(pt, id_var, type = NULL, delta_q = 0.025, bounce_type = "initial", jump = 0.25, bounce_val = 0.1, rev_n = 0, cons_0 = 1){
 
-  pt_names <- names(pt)
-  prices <- pt_names[pt_names!=id_var]
+  ### WARNING: NA values should have been changed to 0 as outlined in the `pt_prep()` function
+  if(is.null(type)) stop(rlang::format_error_bullets(c( "!" = c("Type required: Please select either 'partial' or 'full' using the 'type' argument"))), call. = FALSE)
+
+  prices <- names(pt)[names(pt)!=id_var]
   names(pt)[names(pt) == id_var] <- "id"
 
   remove.id.trend = {}
@@ -60,7 +73,7 @@ pt_qc <- function(pt, id_var, type, delta_q = 0.025, bounce_type = "initial", ju
   if(type=="full"){
 
     ### WARNING: NA values should have been changed to 0 as outlined in the `pt_prep()` function
-    if(any(is.na(pt))) stop("IDs with missing values")
+    if(any(is.na(pt))) stop(rlang::format_error_bullets(c("!" = c("IDs with missing values"))), call. = FALSE)
 
     ### --- IDENTIFY & REMOVE IDs with a trend violation
 
@@ -240,9 +253,12 @@ pt_qc <- function(pt, id_var, type, delta_q = 0.025, bounce_type = "initial", ju
   if(length(remove.id.bounce)==0) (remove.id.bounce <- "NULL")
   if(length(remove.id.reversal)==0) (remove.id.reversal <- "NULL")
 
-  cat(" IDs with a trend violation: ",remove.id.trend,
-      "\n","IDs with a bounce violation: ", remove.id.bounce,
-      "\n","IDs with a reversal violation: ", remove.id.reversal,"\n")
+  message(rlang::format_error_bullets(c(i = c("IDs with a trend violation:"),
+                                        " " = c(paste(remove.id.trend, collapse = ",")),
+                                       i = c("IDs with a bounce violation:"),
+                                       " " = c(paste(remove.id.bounce, collapse = ",")),
+                                       i = c("IDs with a reversal violation:"),
+                                       " " = c(paste(remove.id.reversal, collapse = ",")))))
 
   return(pt_final)
 }

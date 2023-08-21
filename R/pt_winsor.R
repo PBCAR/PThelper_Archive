@@ -1,9 +1,10 @@
-#' PT WINSOR
+#' `pt_winsor()`
 #'
-#' This function helps users to manage outliers at the price level, or at the indicator level by using winsorization techniques. There are
-#' 3 options: i) Option 1 replaces outliers with the maximum non-outlying value rounded up; ii) Option 2 replaces outliers with a value 1
-#' higher than highest (or 1 lower than the lowest) non-outlying value; or iii) outlying values are replaced with 1 value above the next
-#' highest non-outlying value to maintain order.
+#' This function helps users to manage outliers at the price level, or at the indicator level by using winsorization techniques. There are 3 options:
+#'
+#' i) Option 1 replaces outliers with the maximum non-outlying value rounded up;
+#' ii) Option 2 replaces outliers with a value 1 higher than highest (or 1 lower than the lowest) non-outlying value; or
+#' iii) outlying values are replaced with 1 value above the next highest non-outlying value to maintain order.
 #'
 #' @param pt A data frame consisting of the `id_var` and relevant purchase task variables (prices or indicators).
 #' @param id_var The name of the unique identifier (ID) as identified in the data frame.
@@ -16,13 +17,23 @@
 #' @param delta Used to retain winsorization order when using winsorization type 3 for level "indicator". At the price level, a
 #' the 1 unit increase in consumption means that the delta value is by default 1. For winsorization at the "indicator" level, the delta
 #' must be defined by the user. For elasticity, a small value of 0.001 is recommended.
+#' @examples
+#'
+#' ##### Example Data
+#' pt <- data.frame("ID" = c(1:36),
+#' "Intensity" = c(10,12,15,0,99,11,7,6,12,7,8,10,5,6,10,0,3,7,5,0,2,3,5,6,10,15,12,7,0,9,0,6,7,8,4,5),
+#' "Breakpoint" = c(1,2,5,0,10,3,0.5,0.2,0.3,3,4,5,7.5,0.5,2,0,0.1,0.5,0.5,0,3,2,2,1,2,3,4,1,0,2,0,5,5,7.5,2,3))
+#'
+#' ##### Function Example
+#' pt2 <- pt_winsor(pt, id_var = "ID", level = "indicator", index_var = c("Intensity"), delta = 1)
+#'
 #' @return A list consisting of two data frames: "data" which consists of the `id_var` and `pt` including the winsorized value(s); and
 #' "wins_table" which provides details on which value(s) by `id_var` were winsorized (values before and after provided).
 #' @export
 
 pt_winsor <- function(pt, id_var, level = "price", z_val = 3.99, option = 3, index_var = NULL, delta = NULL) {
 
-  if(is.null(delta) & option==3 & level =="indicator") stop("Delta value required for this winsorization option!")
+  if(is.null(delta) & option==3 & level =="indicator") stop(rlang::format_error_bullets(c( x = "Delta value required for this winsorization option!")))
 
   pt_names <- names(pt)
 

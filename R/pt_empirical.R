@@ -1,9 +1,24 @@
-#' PT EMPIRICAL
+#' `pt_empirical()`
 #'
 #' This function extracts the empirical demand indices (Intensity, Breakpoint, Omax, and Pmax) from the purchase task.
 #'
 #' @param pt A data frame consisting of the `id_var` and purchase task variables.
 #' @param id_var The name of the unique identifier as identified in the data frame.
+#' @examples
+#'
+#' ##### Load Data
+#' data("cpt_data")
+#'
+#' ##### Prep Data
+#' pt <- price_prep(cpt_data, id_var = "ID", vars = c(paste0("cpt",1:15)),
+#' prices = c("0","0.05","0.10","0.20","0.30","0.40","0.50", "0.75","1","2","3","4","5","7.5","10"))
+#'
+#' pt2 <- pt_prep(pt, id_var = "ID", remove0 = TRUE, max_val = 99)
+#' pt3 <- pt_qc(pt2, id_var = "ID", type = "partial", bounce_type = "p2p")
+#'
+#' ##### Function Example
+#' pt4 <- pt_empirical(pt3$data,id_var = "ID")
+#'
 #' @return A data frame
 #' @export
 
@@ -34,17 +49,35 @@ pt_empirical <- function(pt, id_var){
 
   ### --- Calculate Empirical OMAX and PMAX
 
-  pt_omax <- stats::aggregate(pt_long[c("expenditure")], by = list(id = pt_long[,"id"]), function(x) max(x, na.rm = T))
-  pt_omax$omax <- pt_omax$expenditure
+  pt_all <- data.frame(id = NULL, omax = NULL, pmax = NULL)
 
-  pt_long <- merge(pt_long,pt_omax[c("id","omax")], by = "id", all.x = T)
-  pt_long$max_price <- ifelse(pt_long$omax==pt_long$expenditure,pt_long$c,NA)
-  pt_pmax <- stats::aggregate(pt_long[c("max_price")], by = list(id = pt_long[,"id"]), function(x) max(x, na.rm = T))
-  pt_pmax$pmax <- pt_pmax$max_price
-  pt_max <- merge(pt_omax[c("id","omax")],pt_pmax[c("id","pmax")], by = "id", all.x = T)
+  for(id_num in pt$id){
+
+    pt_dat_i <- pt_long[(pt_long$id == id_num),]
+
+    omax_i <- max(pt_dat_i$expenditure)
+    colnames(pt_summ_dat) <- c("id","omax")
+
+    pmax_i <- min(pt_dat_i$c[pt_dat_i$expenditure==omax_i])
+
+    dat_i <- data.frame(id = id_num, omax = omax_i, pmax = pmax_i)
+
+    pt_all <- rbind(pt_all,dat_i)
+  }
+
+  ### --- Calculate Empirical OMAX and PMAX: NOT CORRECT FOR THOSE WITH ZERO CONSUMPTION
+
+  # pt_omax <- stats::aggregate(pt_long[c("expenditure")], by = list(id = pt_long[,"id"]), function(x) max(x, na.rm = T))
+  # pt_omax$omax <- pt_omax$expenditure
+  #
+  # pt_long <- merge(pt_long,pt_omax[c("id","omax")], by = "id", all.x = T)
+  # pt_long$max_price <- ifelse(pt_long$omax==pt_long$expenditure,min(pt_long$c[pt_long$expenditure==pt_long$omax]),NA)
+  # pt_pmax <- stats::aggregate(pt_long[c("max_price")], by = list(id = pt_long[,"id"]), function(x) max(x, na.rm = T))
+  # pt_pmax$pmax <- pt_pmax$max_price
+  # pt_max <- merge(pt_omax[c("id","omax")],pt_pmax[c("id","pmax")], by = "id", all.x = T)
 
   ### MERGE INDICATORS in final data set
-  pt_final <- merge(pt[c("id","q0","bp")],pt_max, by = "id", all.x = T)
+  pt_final <- merge(pt[c("id","q0","bp")],pt_all, by = "id", all.x = T)
   colnames(pt_final) <- c(id_var,"Intensity","Breakpoint","Omax","Pmax")
 
   pt_final <- merge(pt_orig, pt_final, by = id_var, all.x = T)

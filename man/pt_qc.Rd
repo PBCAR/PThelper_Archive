@@ -2,12 +2,12 @@
 % Please edit documentation in R/pt_qc.R
 \name{pt_qc}
 \alias{pt_qc}
-\title{PT QC}
+\title{`pt_qc()`}
 \usage{
 pt_qc(
   pt,
   id_var,
-  type,
+  type = NULL,
   delta_q = 0.025,
   bounce_type = "initial",
   jump = 0.25,
@@ -49,8 +49,8 @@ are allowed.}
 \item{cons_0}{The number of consecutive zeroes to signify a reversal from zero, one of c(1,2). The default is 1.}
 }
 \value{
-A list consisting of two data frames: "data" which consists of the `id_var` and purchase task variables, and the
-"qc_data" which provides details on the results of the quality control for all IDs.
+A list consisting of two data frames: "data" which consists of the `id_var` and purchase task variables, and
+"qc_data" which provides details on the results of quality control for all IDs.
 }
 \description{
 This function helps users to conduct quality control on purchase task data to remove non-systematic data. Specifically, this function
@@ -65,12 +65,17 @@ Identification and management of nonsystematic purchase task data: Toward best p
 Experimental and clinical psychopharmacology, 23(5), 377.
 }
 \examples{
-### ---------- PT PREP:
-cpt_data <- price_prep(cpt_data, id_var = "ID", vars = c(paste0("cpt",1:15)),
-price = c("0","0.05","0.10","0.20","0.30","0.40","0.50","0.75","1","2","3","4","5","7.5","10"))
 
-cpt_data <- pt_prep(cpt_data, id_var = "ID", partial = TRUE)
+##### Load Data
+data("cpt_data")
 
-### ---------- PT QC:
-PT <- pt_qc(cpt_data, id_var = "ID", type = "partial")
+##### Prep Data
+pt <- price_prep(cpt_data, id_var = "ID", vars = c(paste0("cpt",1:15)),
+prices = c("0","0.05","0.10","0.20","0.30","0.40","0.50", "0.75","1","2","3","4","5","7.5","10"))
+
+pt2 <- pt_prep(pt, id_var = "ID", remove0 = TRUE, max_val = 99)
+
+##### Function Example
+pt3 <- pt_qc(pt2, id_var = "ID", type = "partial", bounce_type = "p2p")
+
 }

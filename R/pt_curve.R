@@ -1,29 +1,64 @@
-utils::globalVariables(c("id","kval","pred","alpha","q0","pmax"))
+utils::globalVariables(c("id","kval","pred","alpha","q0","pmax","rsquared","pred_dat","unit_elast"))
 
-#' PT CURVE
+#' `pt_curve()`
 #'
-#' This function derives and visualizes alpha using the Koffarnus, Franck, Stein, and Bickel (2015) exponentiated equation. Alpha
-#' (rate of change constant) can be derived for the entire sample or for individuals. This function will also visualize the demand curve(s).
+#' This function derives demand functions using the Koffarnus, Franck, Stein, and Bickel, (2015) exponentiated equation. The derived demand indicators from
+#' these models can be calculated for the entire sample, for sub-groups (using a grouping variable), or for individuals. Visualizations are produced of the
+#' mean aggregate demand curves when the `type` is either "overall" or "group".
 #' @param pt A data frame consisting of the `id_var` and purchase task variables.
 #' @param id_var The name of the unique identifier as identified in the data frame.
-#' @param type The type of demand curve to derive from the data, one of c("overall","individual"). The default is "overall" which
-#' will calculate overall demand for the entire data frame.
-#' @param k The k-value to use for curve fitting. The default is NULL, in which the k-value is calculated from the entire sample, with
-#' k representing the span of consumption in log10 units. Otherwise, a single numerical value can be given as the k-value,
+#' @param type The level for fitting the demand curves, one of c("overall","group","individual"). The default is "overall" which will calculate
+#' overall demand for the entire data frame. For `type` "group", equation-derived demand indicators for each of the groups as identified by the `group_var`
+#' are visualized. When `type` equals "individual", equation-derived demand indicators are calculated for each individual as identified by `id_var`.
+#' @param k The k-value to use in the exponentiated demand equation. The default is NULL, in which the k-value is calculated from the entire sample,
+#' with k representing the span of consumption in log10 units. Otherwise, a single numerical value can be given as the k-value,
 #' allowing for comparisons across studies, since k influences the calculation of alpha. When k is calculated from the entire sample,
 #' it is calculated using the mean average consumption at the lowest and highest price points and in instances when the mean average consumption
 #' at the highest price point is 0, the lowest non-zero mean consumption is used.
-#' @param y_type The way the y-axis (prices) are to be displayed. One of c("log10","original"), with "log10" as the default, or
-#' "original" for the existing price values.
-#' @return A ggplot2 graphical object; For `type` "individual", the original pt data frame plus the derived values for each individual
-#' is returned.
+#' @param group_var The name of the grouping variable when `type` equals "group".
+#' @param n_start The number of starting values of alpha to use for fitting the demand curve when type `equals` "individual". The default is 10.
+#' @examples
+#'
+#' ##### Load Data
+#' data("cpt_data")
+#'
+#' ##### Prep Data
+#' pt <- price_prep(cpt_data, id_var = "ID", vars = c(paste0("cpt",1:15)),
+#' prices = c("0","0.05","0.10","0.20","0.30","0.40","0.50", "0.75","1","2","3","4","5","7.5","10"))
+#'
+#' pt2 <- pt_prep(pt, id_var = "ID", remove0 = TRUE, max_val = 99)
+#' pt3 <- pt_qc(pt2, id_var = "ID", type = "partial", bounce_type = "p2p")
+#'
+#' ##### Function Example
+#' pt4 <- pt_curve(pt3$data, id_var = "ID", type = "individual")
+#'
+#' @return A ggplot2 graphical object; For `type` "individual", the original pt data frame plus the derived values for each individual is returned.
 #' @export
 
-pt_curve <- function(pt, id_var, type, k = NULL, y_type = "log10") {
+pt_curve <- function(pt, id_var, type = c("overall","group","individual"), k = NULL, group_var = NULL, n_start = 10) {
 
   pt_names <- names(pt)
-  prices <- pt_names[pt_names!=id_var & pt_names!="Intensity" & pt_names!="Breakpoint" & pt_names!="Omax" & pt_names!="Pmax"]
+
+  if(type == "overall" | type == "individual"){
+
+    prices <- pt_names[pt_names!=id_var & pt_names!="Intensity" & pt_names!="Breakpoint" & pt_names!="Omax" & pt_names!="Pmax"]
+
+  }
+
+  if(type == "group"){
+
+    prices <- pt_names[pt_names!=id_var & pt_names!=group_var & pt_names!="Intensity" & pt_names!="Breakpoint" & pt_names!="Omax" & pt_names!="Pmax"]
+    names(pt)[names(pt) == group_var] <- "group"
+
+  }
+
   names(pt)[names(pt) == id_var] <- "id"
+
+  ### Calculate acceptable non-zero value to replace 0 price points for plotting
+  zero_conv <- (as.numeric(prices[2])-as.numeric(prices[1]))/10
+
+  ### Calculate log10 label breaks
+  log_labels <- 10^(log10(10^ceiling(log10(zero_conv))):100 * 1)
 
   pt$q0 <- as.numeric(pt[,prices[1]])
 
@@ -34,7 +69,7 @@ pt_curve <- function(pt, id_var, type, k = NULL, y_type = "log10") {
   pt_long <- pt_long[order(pt_long$id),]
   pt_long$c <- as.numeric(prices)
 
-  ### grab mean values of y for every price (x); then calculate max value minus min value
+  ### grab mean values of q for every price (c); then calculate max value minus min value
 
   pt_mean <- stats::aggregate(pt_long[c("q")], by = list(c = pt_long[,"c"]), function(x) mean(x, na.rm = T))
 
@@ -50,15 +85,40 @@ pt_curve <- function(pt, id_var, type, k = NULL, y_type = "log10") {
     kval <- k
   }
 
-  pt_mean$expenditure <- pt_mean$c*pt_mean$q
-  pt_mean$omax <- max(pt_mean$expenditure)
-
-  pmax_emp <- pt_mean$c[pt_mean$expenditure==pt_mean$omax]
-
-  q0_start <- pt_mean$q[pt_mean$c==min(pt_mean$c)]
-  alpha_start <- -(pracma::lambertWp(-(1/log(10^kval))))/(q0_start*pmax_emp)
-
   equation <- "q ~ q0 * 10^(k * (exp(-alpha * q0 * c)-1))"
+
+  ### Grab the range of data for start values
+
+  pt_dat <- pt_long
+  pt_dat$expenditure <- pt_dat$c*pt_dat$q
+  pt_summ_dat <- stats::aggregate(pt_dat[c("expenditure")], by = list(id = pt_dat[,"id"]), function(x) max(x))
+  colnames(pt_summ_dat) <- c("id","omax")
+
+  pt_dat <- merge(pt_dat, pt_summ_dat, by = "id", all.x = TRUE)
+
+  pt_all <- data.frame(id = NULL, q0 = NULL, alpha = NULL)
+
+  for(id_num in pt$id){
+
+    pt_dat_i <- pt_dat[(pt_dat$id == id_num),]
+
+    pmax_i <- min(pt_dat_i$c[pt_dat_i$expenditure==pt_dat_i$omax])
+    pmax_i <- ifelse(pmax_i==0,zero_conv,pmax_i)
+
+    q0_i <- pt_dat_i$q[pt_dat_i$c==min(pt_dat_i$c)]
+    alpha_i <- -(pracma::lambertWp(-(1/log(10^kval))))/(q0_i*pmax_i)
+
+    dat_i <- data.frame(id = id_num, q0 = q0_i, alpha = alpha_i, pmax = pmax_i)
+
+    pt_all <- rbind(pt_all,dat_i)
+  }
+
+  q0_minmax <- c(min(pt_all$q0),max(pt_all$q0))
+  q0_by <- (min(pt_all$q0[pt_all$q0!= q0_minmax[1]])-q0_minmax[1])
+  q0_range <- seq(q0_minmax[1],q0_minmax[2], by = q0_by)
+  alpha_minmax <- c(min(pt_all$alpha),max(pt_all$alpha))
+  alpha_by <- 10^(log10(10^ceiling(log10(min(pt_all$alpha[pt_all$alpha!= alpha_minmax[1]])-alpha_minmax[1]))))*10
+  alpha_range <- seq(alpha_minmax[1]-(alpha_by*(n_start/2)),alpha_minmax[2]+(alpha_by*(n_start/2)), by = alpha_by)
 
   ### --- OVERALL ELASTICITY
 
@@ -67,34 +127,53 @@ pt_curve <- function(pt, id_var, type, k = NULL, y_type = "log10") {
     ### From mean
 
     pt_mean$k <- kval
+    pt_mean$expenditure <- pt_mean$c*pt_mean$q
+    pt_mean$omax <- max(pt_mean$expenditure)
 
-    pt_mod_mean <- stats::nls(equation, data = pt_mean, start = list(q0 = q0_start, alpha = alpha_start), control = stats::nls.control(maxiter = 100))
+    pmax_emp <- pt_mean$c[pt_mean$expenditure==pt_mean$omax]
+
+    q0_start <- pt_mean$q[pt_mean$c==min(pt_mean$c)]
+    alpha_start <- -(pracma::lambertWp(-(1/log(10^kval))))/(q0_start*pmax_emp)
+
+    pt_mod_mean <- stats::nls(equation, data = pt_mean, start = list(q0 = q0_start, alpha = alpha_start), control = stats::nls.control(maxiter = 500))
 
     coef_mean <- as.character(stats::coef(pt_mod_mean))
     coef_mean_dat <- data.frame(q0 = coef_mean[1], alpha = coef_mean[2])
 
-    pmax <- -(pracma::lambertWp(-(1/log(10^kval))))/(as.numeric(coef_mean_dat$alpha) * as.numeric(coef_mean_dat$q0))
+    coef_mean_dat$pmax <- -(pracma::lambertWp(-(1/log(10^kval))))/(as.numeric(coef_mean_dat$alpha) * as.numeric(coef_mean_dat$q0))
+    coef_mean_dat$rsquared <- 1 - sum(stats::resid(pt_mod_mean)^2)/ sum((pt_mean$q - mean(pt_mean$q))^2)
 
-    coef_mean_dat$pmax <- pmax
-
-    ### Calculate R^2
-
-    rsquared <- 1 - sum(stats::resid(pt_mod_mean)^2)/ sum((pt_mean$q - mean(pt_mean$q))^2)
+    coef_mean_dat$facet <- 1
 
     ### PREP for visualization
 
-    pt_mean$pred <- stats::predict(pt_mod_mean)
-    pt_mean$c[pt_mean$c==0] <- 0.001
+    ### Predict using more values of c, rather than set prices (creates smoother line)
+    # pt_mean$pred <- stats::predict(pt_mod_mean)
+    pt_pred <- data.frame(c = seq(zero_conv,as.numeric(prices[length(prices)]), by = (length(prices)/length(prices)^3)))
+
+    suppressWarnings({
+      pt_pred$pred <- stats::predict(pt_mod_mean, pt_pred)
+    })
+
+    pt_mean$c[pt_mean$c==0] <- (zero_conv/2)
+
+    ### Should only facet (i.e. create a break if prices[1]==0)
+    ### Thus use two different plot codes one for facet, one without.
+    pt_mean$facet <- ifelse(pt_mean$c==zero_conv/2,0,1)
+    pt_pred$facet <- 1
+
 
     pt_plot <- ggplot2::ggplot(pt_mean, ggplot2::aes(x = c, y = q)) +
-      ggplot2::geom_line(ggplot2::aes(y = pred), linewidth = 2, colour = "#999999") +
+      ### Vertical line separating inelasticity and elasticity (i.e. when unit elasticity is reached = -1)
+      ggplot2::geom_vline(pt_mean[(pt_mean$facet==1),], mapping = ggplot2::aes(xintercept = coef_mean_dat$pmax), linewidth = 1, linetype = "dashed", colour = "#BEBEBE") +
+      ggplot2::geom_line(pt_pred, mapping = ggplot2::aes(y = pred), lineend = "round", linewidth = 2, colour = "#999999") +
       ggplot2::geom_point(size = 2.5) +
-      ggplot2::scale_x_log10(breaks=c(0.001, 0.01, 0.1, 1, 10, 100, 1000, 10000, 100000),
-                             labels=c(paste0(min(prices)), 0.01, 0.1, 1, 10, 100, 1000, 10000, 100000)) +
+      ggplot2::facet_grid(~facet, scales = "free_x", space = "free_x") +
+      ggplot2::scale_x_log10(breaks = c(zero_conv/2,log_labels), labels = c(prices[1],log_labels)) +
       ggplot2::theme_classic() + ggplot2::xlab("\n Price (Log)") + ggplot2::ylab("Consumption \n") +
       ggplot2::ggtitle("Mean Demand Curve") +
       ggplot2::geom_text(data = coef_mean_dat,
-                         ggplot2::aes(x = Inf, y = Inf,label = paste0(
+                         x = Inf, y = Inf, ggplot2::aes(label = paste0(
                            "\n \u03b1: ", signif(as.numeric(alpha)),"     ",
                            "\n Q0: ", signif(as.numeric(q0)),"     ",
                            "\n Pmax: ", signif(as.numeric(pmax)),"     ",
@@ -103,8 +182,103 @@ pt_curve <- function(pt, id_var, type, k = NULL, y_type = "log10") {
       ggplot2::theme(plot.title = ggplot2::element_text(size = 25, face = "bold", hjust = 0.5),
                      axis.title = ggplot2::element_text(size = 22, face = "bold"),
                      axis.text = ggplot2::element_text(size = 19),
-                     panel.border = ggplot2::element_rect(colour = "black", fill = NA, linewidth = 2))
+                     axis.ticks.length = ggplot2::unit(2,"mm"),
+                     strip.background = ggplot2::element_blank(),
+                     strip.text = ggplot2::element_blank(),
+                     axis.line = ggplot2::element_line(linewidth = 1.5))
 
+  }
+
+  ### --- GROUP ELASTICITY
+
+  if(type == "group"){
+  ### grab mean values of y for every price (x) by group; then calculate max value minus min value
+
+  pt_group_mean <- stats::aggregate(pt_long[c("q")], list(c = pt_long[,"c"], group = pt_long[,"group"]), function(x) mean(x, na.rm = T))
+
+  pt_group_mean$group <- as.factor(pt_group_mean$group)
+  pt_group_mean$expenditure <- pt_group_mean$c*pt_group_mean$q
+  pt_group_mean$omax <- max(pt_group_mean$expenditure)
+
+  ### Create loop for each group
+
+  group_uniq <- unique(pt_group_mean$group)
+
+  pt_group_mean$k <- kval
+  pt_elast <- data.frame(group = NULL, q0 = NULL, alpha = NULL, unit_elast = NULL, r2 = NULL)
+  pt_plot_dat <- data.frame(group = NULL, pred = NULL, res = NULL)
+
+  for(group_u in group_uniq){
+
+    pt_g <- pt_group_mean[(pt_group_mean$group == group_u),]
+
+    pt_g$expenditure <- pt_g$c*pt_g$q
+    pt_g$omax <- max(pt_g$expenditure)
+
+    pmax_emp_g <- min(pt_g$c[pt_g$expenditure==pt_g$omax])
+
+    q0_start_g <- pt_g$q[pt_g$c==min(pt_g$c)]
+    alpha_start_g <- -(pracma::lambertWp(-(1/log(10^kval))))/(q0_start_g*pmax_emp_g)
+
+    pt_mod_g <- stats::nls(equation, data = pt_g, start = list(q0 = q0_start_g,alpha = alpha_start_g), control = stats::nls.control(maxiter = 500))
+
+      # pred_i <- stats::predict(pt_mod_i)
+      pt_group_pred <- data.frame(c = seq(zero_conv,as.numeric(prices[length(prices)]), zero_conv))
+
+      suppressWarnings({
+        pt_group_pred$pred <- stats::predict(pt_mod_g, pt_group_pred)
+      })
+
+      # res_i <- stats::resid(pt_mod_i)
+      coef_g <- as.character(stats::coef(pt_mod_g))
+
+      ### Calculate R^2 for individual curves
+
+      r2_g <- 1 - sum(stats::resid(pt_mod_g)^2)/ sum((pt_g$q - mean(pt_g$q))^2)
+
+      pmax_g <- -(pracma::lambertWp(-(1/log(10^kval))))/(as.numeric(coef_g[2]) * as.numeric(coef_g[1]))
+
+
+    group_dat <- data.frame(group = group_u, q0 = coef_g[1], alpha = coef_g[2], unit_elast = pmax_g, r2 = r2_g)
+
+    pt_group_pred$group <- group_u
+
+    pt_elast <- rbind(pt_elast,group_dat)
+    pt_plot_dat <- rbind(pt_plot_dat,pt_group_pred)
+  }
+
+    pt_elast$facet <- 1
+
+    pt_plot_dat$c[pt_plot_dat$c==0] <- zero_conv
+    pt_plot_dat$group <- as.factor(pt_plot_dat$group)
+    pt_plot_dat$facet <- 1
+
+    pt_group_mean$facet <- ifelse(pt_group_mean$c==prices[1],0,1)
+    pt_group_mean$c[pt_group_mean$c==0] <- zero_conv/2
+
+    pt_group_pred$facet <- 1
+
+    pt_plot <- ggplot2::ggplot(pt_group_mean, ggplot2::aes(x = c, y = q, group = group, colour = group)) +
+      ### Vertical line separating inelasticity and elasticity (i.e. when unit elasticity is reached = -1)
+      ggplot2::geom_vline(pt_elast, mapping = ggplot2::aes(xintercept = unit_elast, colour = group), linewidth = 1, linetype = "dashed", show.legend = FALSE) +
+      ggplot2::geom_line(pt_plot_dat, mapping = ggplot2::aes(y = pred), lineend = "round", linewidth = 2, alpha = 1) +
+      ggplot2::geom_point(alpha = 0.8, size = 3.5, show.legend = FALSE) +
+      ggplot2::facet_grid(~facet, scales = "free_x", space = "free_x") +
+      ggplot2::scale_x_log10(breaks=c(zero_conv/2, log_labels),
+                             labels=c(paste0(min(prices)), log_labels)) +
+      ggplot2::theme_classic() + ggplot2::xlab("\n Price (Log)") + ggplot2::ylab("Consumption \n") +
+      ggplot2::ggtitle("Demand Curves by Group") +
+      ggplot2::theme(plot.title = ggplot2::element_text(size = 25, face = "bold", hjust = 0.5),
+                     axis.title = ggplot2::element_text(size = 22, face = "bold"),
+                     axis.text = ggplot2::element_text(size = 19),
+                     axis.ticks.length = ggplot2::unit(2,"mm"),
+                     strip.background = ggplot2::element_blank(),
+                     strip.text = ggplot2::element_blank(),
+                     axis.line = ggplot2::element_line(linewidth = 1.5),
+                     legend.position = "top",
+                     legend.title = ggplot2::element_text(size = 17, face = "bold", vjust = 0.5),
+                     legend.text = ggplot2::element_text(size = 15, vjust = 0.5)) +
+      ggplot2::guides(colour = ggplot2::guide_legend(title = group_var, override.aes = list(alpha = 1, linewidth = 5)))
 
   }
 
@@ -113,96 +287,96 @@ pt_curve <- function(pt, id_var, type, k = NULL, y_type = "log10") {
   if(type == "individual"){
 
     pt_long$k <- kval
-    pt_elast <- data.frame(id = NULL, q0 = NULL, alpha = NULL, #pmax = NULL,
-                           r2 = NULL)
-    pt_fit <- data.frame(id = NULL, pred = NULL, res = NULL)
+
+    pt_elast <- data.frame(id = NULL, q0 = NULL, alpha = NULL, unit_elast = NULL, r2 = NULL)
 
     for(id_num in pt$id){
 
-      pt_dat <- pt_long[(pt_long$id == id_num),]
+      pt_i <- pt_long[(pt_long$id == id_num),]
 
-      pt_dat$expenditure <- pt_dat$c*pt_dat$q
-      pt_dat$omax <- max(pt_dat$expenditure)
+      pt_i$expenditure <- pt_i$c*pt_i$q
+      pt_i$omax <- max(pt_i$expenditure)
 
-      pmax_emp_i <- min(pt_dat$c[pt_dat$expenditure==pt_dat$omax])
+      pmax_emp_i <- min(pt_i$c[pt_i$expenditure==pt_i$omax])
 
-      q0_start_i <- pt_dat$q[pt_dat$c==min(pt_dat$c)]
+      q0_start_i <- pt_i$q[pt_i$c==min(pt_i$c)]
       alpha_start_i <- -(pracma::lambertWp(-(1/log(10^kval))))/(q0_start_i*pmax_emp_i)
 
       ## Convert any zero values in the first two price points to NA as they will not be adequately fit
-      if(pt_dat$q[pt_dat$c==prices[1]]==0 | pt_dat$q[pt_dat$c==prices[2]]==0){
+      ### could modify and calculate, then user can decide if they want to remove these estimates
+      ### but would then need to use a non-zero pmax (zero_conv) to calculate alpha starting value
+      if(pt_i$q[pt_i$c==prices[1]]==0 | pt_i$q[pt_i$c==prices[2]]==0){
         coef_i <- c(NA,NA)
-        res_i <- rep(NA,length(prices))
-        pred_i <- rep(NA,length(prices))
         pmax_i <- NA
         r2_i <- NA
       }
 
-      if(pt_dat$q[pt_dat$c==prices[1]]!=0 & pt_dat$q[pt_dat$c==prices[2]]!=0){
+      if(pt_i$q[pt_i$c==prices[1]]!=0 & pt_i$q[pt_i$c==prices[2]]!=0){
 
-        pt_mod_i <- stats::nls(equation, data = pt_dat, start = list(q0 = q0_start_i,alpha = mean(c(alpha_start,alpha_start_i))), control = stats::nls.control(maxiter = 100))
+        ### Need to feed coefficients that fit for the nls2 to the nls to get actual useful estimates
+        ### because grid-search will use the exact start value fed to the algorithm (same as brute-force).
 
-        pred_i <- stats::predict(pt_mod_i)
-        res_i <- stats::resid(pt_mod_i)
+        alpha_mean_i_pos <- which.min(abs(alpha_range-alpha_start_i))
+
+        alpha_range_i <- c(alpha_range[(alpha_mean_i_pos-n_start/2):(alpha_mean_i_pos+n_start/2)])
+
+        ### Final start values for individual
+        start_val_i <- data.frame(q0 = c(rep(q0_start_i,length(alpha_range_i))), alpha = c(alpha_range_i))
+
+        ### suppress errors here
+        mess_nls2 <- utils::capture.output(type = "message",
+          pt_mod_start_i <- try(nls2::nls2(equation, data = pt_i, start = start_val_i,
+                               algorithm = "grid-search", control = stats::nls.control(maxiter = 100)),
+                               silent = TRUE))
+
+        while(TRUE){
+
+          pt_mod_i <- NULL
+
+          try(pt_mod_i <- stats::nls(equation, data = pt_i, start = stats::coef(pt_mod_start_i),control = stats::nls.control(maxiter = 500)), silent = TRUE); # does not stop in the case of error
+
+          if(is.null(pt_mod_i))stop(rlang::format_error_bullets(c(x = "Increase Number of Starts using the `n_start` argument.")), call. = FALSE);
+
+          if(!is.null(pt_mod_i))break; ### Quit from loop if NLS works
+
+        }
+
         coef_i <- as.character(stats::coef(pt_mod_i))
 
         ### Calculate R^2 for individual curves
 
-        r2_i <- 1 - sum(stats::resid(pt_mod_i)^2)/ sum((pt_long$q[pt_long$id==id_num] - mean(pt_long$q[pt_long$id==id_num]))^2)
+        r2_i <- 1 - sum(stats::resid(pt_mod_i)^2)/ sum((pt_i$q - mean(pt_i$q))^2)
 
-        # pmax_i <- -(pracma::lambertWp(-(1/log(10^kval))))/(as.numeric(coef_i[2]) * as.numeric(coef_i[1]))
+        pmax_i <- -(pracma::lambertWp(-(1/log(10^kval))))/(as.numeric(coef_i[2]) * as.numeric(coef_i[1]))
+
+        id_dat <- data.frame(id = id_num, q0 = coef_i[1], alpha = coef_i[2], unit_elast = pmax_i, r2 = r2_i)
+
+        pt_elast <- rbind(pt_elast,id_dat)
 
       }
 
-      id_dat <- data.frame(id = id_num, q0 = coef_i[1], alpha = coef_i[2], #pmax = pmax_i,
-                           r2 = r2_i)
-      fit_dat <- data.frame(id = id_num, pred = c(pred_i), res = c(res_i), c = as.numeric(prices))
-
-      pt_elast <- rbind(pt_elast,id_dat)
-      pt_fit <- rbind(pt_fit,fit_dat)
     }
-
-    pt_plot_dat <- pt_fit
-    pt_plot_dat$c[pt_plot_dat$c==0] <- 0.001
-
-    pt_plot <- ggplot2::ggplot(pt_plot_dat, ggplot2::aes(x = c, y = pred, group = id)) +
-      ggplot2::geom_line(linewidth = 1, colour = "#999999", alpha  = 0.6) +
-      ggplot2::scale_x_log10(breaks=c(0.001, 0.01, 0.1, 1, 10, 100, 1000, 10000, 100000, 1000000, 10000000, 100000000),
-                             labels=c(paste0(min(prices)), 0.01, 0.1, 1, 10, 100, 1000, 10000, 100000, 1000000, 10000000, 100000000)) +
-      ggplot2::theme_classic() + ggplot2::xlab("\n Price (Log)") + ggplot2::ylab("Consumption (Log) \n") +
-      ggplot2::ggtitle("Individual Demand Curves") +
-      ggplot2::theme(plot.title = ggplot2::element_text(size = 25, face = "bold", hjust = 0.5),
-                     axis.title = ggplot2::element_text(size = 22, face = "bold"),
-                     axis.text = ggplot2::element_text(size = 19),
-                     panel.border = ggplot2::element_rect(colour = "black", fill = NA, linewidth = 2))
-
 
     ### PREPARE data for export
 
     pt_elast$q0 <- signif(as.numeric(pt_elast$q0))
     pt_elast$alpha <- signif(as.numeric(pt_elast$alpha))
-    colnames(pt_elast) <- c("id","Q0","Alpha",# "Pmax"
-                            "R2")
+    colnames(pt_elast) <- c("id","Q0","Alpha", "UnitElasticity","R2")
 
-    }
-
-  if(y_type=="log10"){
-    pt_plot <- pt_plot + ggplot2::scale_y_log10(breaks=c(0.001, 0.01, 0.1, 1, 10, 100, 1000, 10000, 100000, 1000000, 10000000, 100000000),
-                                          labels=c(0.001, 0.01, 0.1, 1, 10, 100, 1000, 10000, 100000, 1000000, 10000000, 100000000)) +
-      ggplot2::ylab("Consumption (Log) \n")
   }
 
-  print(pt_plot)
+  if(type == "overall" | type == "group"){
+  ### Suppress warning about only 1 observation in the facet_grid
+  suppressMessages({
+    print(pt_plot)
+  })
+  }
 
   if(is.null(k)){
-    cat(" Calculated k-value: ", kval, "\n")
+    message(rlang::format_error_bullets(c(i = paste0("Calculated k-value: ", kval))))
   }
 
-  if(type=="overall"){
-  cat(" R-squared value:", round(rsquared,5),"\n")
-  }
-
-  if(type=="individual"){
+  if(type == "individual"){
 
     pt_final <- merge(pt[c("id",pt_names[pt_names!=id_var])], pt_elast, by = "id", all.x = T)
     names(pt_final)[names(pt_final) == "id"] <- id_var

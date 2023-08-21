@@ -1,6 +1,6 @@
 utils::globalVariables(c("Var1","Var2","coefficient","pval_sign"))
 
-#' PT CORR
+#' `pt_corr()`
 #'
 #' This function will provide coefficients and p-values for a pairwise pearson correlation, and can also produce a heatmap
 #' @param pt A data frame which includes only variables to be included in the correlation testing.
@@ -8,6 +8,17 @@ utils::globalVariables(c("Var1","Var2","coefficient","pval_sign"))
 #' @param alpha The alpha value to determine significance, in which significant p-values will have the corresponding correlation
 #' coefficient in the heatmap in bold. The default alpha value is 0.05.
 #' @param coef_size The text size of the coefficients in the heatmap, when the heatmap argument is set to TRUE. Default is 7.
+#' @examples
+#'
+#' ##### Example Data
+#' pt <- data.frame("ID" = c(1:36),
+#' "Intensity" = c(10,12,15,0,99,11,7,6,12,7,8,10,5,6,10,0,3,7,5,0,2,3,5,6,10,15,12,7,0,9,0,6,7,8,4,5),
+#' "Breakpoint" = c(1,2,5,0,10,3,0.5,0.2,0.3,3,4,5,7.5,0.5,2,0,0.1,0.5,0.5,0,3,2,2,1,2,3,4,1,0,2,0,5,5,7.5,2,3),
+#' "Eta" = c(rnorm(36,0.16,0.19)))
+#'
+#'##### Function Example
+#' pt2 <- pt_corr(pt[c(2:4)])
+#'
 #' @return A data frame with correlation coefficients and p-values for each variable included in the correlation testing. If
 #' heatmap is set to TRUE, then a ggplot2 graphical object is also returned.
 #' @export
@@ -29,8 +40,8 @@ pt_corr <- function(pt, heatmap = TRUE, alpha = 0.05, coef_size = 7){
   upper_p <- upper_tri(pt[["p"]])
 
   ### LONG format of matrix
-  corr_dat <- reshape2::melt(upper_corr, na.rm = TRUE)
-  pval_dat <- reshape2::melt(upper_p, na.rm = T)
+  corr_dat <- base_melt(upper_corr)
+  pval_dat <- base_melt(upper_p)
 
   pval_dat$pval_sign <- ifelse(pval_dat$value<alpha,paste0("p < ",alpha),"N.S.")
   pval_dat$pval_sign[pval_dat$Var1==pval_dat$Var2] <- NA
