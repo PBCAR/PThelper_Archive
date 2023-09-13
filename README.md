@@ -186,7 +186,7 @@ pt5 <- pt_curve(pt3$data, id_var = "ID", type = "individual")
 
 ### pt_linear()
 
-This function can be used to calculate and visualize a linear demand curve using the log-log equation (REF) for the entire sample or by a grouping variable. It can also be used to fit individual demand curves in order to derive eta for each individual.
+This function can be used to calculate and visualize a linear demand curve using the log-log equation for the entire sample or by a grouping variable. It can also be used to fit individual demand curves in order to derive eta for each individual.
 
 ```
 pt_linear(pt3$data, id_var = "ID", type = "overall")
