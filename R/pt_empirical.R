@@ -65,7 +65,7 @@ pt_empirical <- function(pt, id_var){
 
     omax_i <- max(pt_dat_i$expenditure)
 
-    pmax_i <- min(pt_dat_i$c[pt_dat_i$expenditure==omax_i])
+    pmax_i <- max(pt_dat_i$c[pt_dat_i$expenditure==omax_i])
 
     dat_i <- data.frame(id = id_num, omax = omax_i, pmax = pmax_i)
 
