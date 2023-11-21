@@ -158,6 +158,7 @@ pt_curve <- function(pt, id_var, type = NULL, k = NULL, group_var = NULL, n_star
   q0_range <- seq(q0_minmax[1],q0_minmax[2], by = q0_by)
   alpha_minmax <- c(min(pt_all$alpha),max(pt_all$alpha))
   alpha_by <- 10^(log10(10^ceiling(log10(min(pt_all$alpha[pt_all$alpha!= alpha_minmax[1]])-alpha_minmax[1]))))*10
+  alpha_by[alpha_by<1e-7] <- 1e-7 ## Avoid excessively small "by" values
   alpha_range <- seq(alpha_minmax[1]-(alpha_by*(n_starts/2)),alpha_minmax[2]+(alpha_by*(n_starts/2)), by = alpha_by)
 
   ##### ----- OVERALL ELASTICITY
