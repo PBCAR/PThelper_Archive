@@ -4,15 +4,7 @@
 \alias{pt_curve}
 \title{`pt_curve()`}
 \usage{
-pt_curve(
-  pt,
-  id_var,
-  type = NULL,
-  k = NULL,
-  group_var = NULL,
-  n_starts = 10,
-  id_diagnose = FALSE
-)
+pt_curve(pt, id_var, type = NULL, k = NULL, group_var = NULL, n_starts = 10)
 }
 \arguments{
 \item{pt}{A data frame consisting of the `id_var` and purchase task variables.}
@@ -32,10 +24,6 @@ at the highest price point is 0, the lowest non-zero mean consumption is used.}
 \item{group_var}{The name of the grouping variable when `type` equals "group".}
 
 \item{n_starts}{The number of starting values of alpha to use for fitting the demand curve when `type` equals "individual". The default is 10.}
-
-\item{id_diagnose}{Whether to identify the first ID number that could not have an individual demand curve successfully fit when `type` equals "individual".
-The default is FALSE. Depending on the type of quality control constraints, non-systematic data could still exist, which will cause errors in curve
-fitting regardless of the number of `n_starts` used.}
 }
 \value{
 A ggplot2 graphical object; For `type` "individual", the original pt data frame plus the derived values for each individual is returned.

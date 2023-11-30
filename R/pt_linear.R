@@ -38,7 +38,7 @@ pt_linear <- function(pt, id_var, type = NULL, zero_val = 0.001, group_var = NUL
   if(!is.data.frame(pt)) stop(rlang::format_error_bullets(c( x = c("'pt' must be a data frame."))), call. = FALSE)
 
   pt_names <- names(pt)
-  var_exclude <- c("Intensity","Breakpoint","Omax","Pmax","Alpha","Q0","UnitElasticity","R2")
+  var_exclude <- c("Intensity","Breakpoint","Omax","Pmax","Alpha","Q0","UnitElasticity","R2","AUC")
 
   if(type == "overall" | type == "individual"){
 

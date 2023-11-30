@@ -28,9 +28,6 @@ utils::globalVariables(c("id","kval","pred","alpha","q0","pmax","rsquared","pred
 #' at the highest price point is 0, the lowest non-zero mean consumption is used.
 #' @param group_var The name of the grouping variable when `type` equals "group".
 #' @param n_starts The number of starting values of alpha to use for fitting the demand curve when `type` equals "individual". The default is 10.
-#' @param id_diagnose Whether to identify the first ID number that could not have an individual demand curve successfully fit when `type` equals "individual".
-#' The default is FALSE. Depending on the type of quality control constraints, non-systematic data could still exist, which will cause errors in curve
-#' fitting regardless of the number of `n_starts` used.
 #' @examples
 #'
 #' ### --- Load Data
@@ -49,13 +46,13 @@ utils::globalVariables(c("id","kval","pred","alpha","q0","pmax","rsquared","pred
 #' @return A ggplot2 graphical object; For `type` "individual", the original pt data frame plus the derived values for each individual is returned.
 #' @export
 
-pt_curve <- function(pt, id_var, type = NULL, k = NULL, group_var = NULL, n_starts = 10, id_diagnose = FALSE) {
+pt_curve <- function(pt, id_var, type = NULL, k = NULL, group_var = NULL, n_starts = 10) {
 
   if(is.null(type)) stop(rlang::format_error_bullets(c( "!" = c("Type required. Please select one of c('overall','group','individual') using the 'type' argument."))), call. = FALSE)
   if(!is.data.frame(pt)) stop(rlang::format_error_bullets(c( x = c("'pt' must be a data frame."))), call. = FALSE)
 
   pt_names <- names(pt)
-  var_exclude <- c("Intensity","Breakpoint","Omax","Pmax","Eta","R2")
+  var_exclude <- c("Intensity","Breakpoint","Omax","Pmax","Eta","R2","AUC")
 
   if(type == "overall" | type == "individual"){
 
@@ -107,8 +104,7 @@ pt_curve <- function(pt, id_var, type = NULL, k = NULL, group_var = NULL, n_star
                     log10(pt_mean$q[pt_mean$c==min(pt_mean$c)])-log10(pt_mean$q[pt_mean$c==max(pt_mean$c[pt_mean$q!=0])]),
                     log10(pt_mean$q[pt_mean$c==min(pt_mean$c)])-log10(pt_mean$q[pt_mean$c==max(pt_mean$c)]))
 
-  message(rlang::format_error_bullets(c(i = c("NOTE: \u03b1 is defined as the rate of change in elasticity (\u03B7)"),
-                                        " " = c("When k is < `exp(1)/log(10)`, the price associated with maximum consumption does not reach unit elasticity"))))
+  message(rlang::format_error_bullets(c(i = c("NOTE: \u03b1 is defined as the rate of change in elasticity (\u03B7)"))))
 
   if(is.null(k)){
     kval <- round(k_range,1)
@@ -117,6 +113,9 @@ pt_curve <- function(pt, id_var, type = NULL, k = NULL, group_var = NULL, n_star
     kval <- k
   }
 
+  if(kval<(exp(1)/log(10))){
+    message(rlang::format_error_bullets(c(i = "When k is < `exp(1)/log(10)`, the price associated with maximum consumption does not reach unit elasticity")))
+}
   equation <- "q ~ q0 * 10^(k * (exp(-alpha * q0 * c)-1))"
 
   ### Grab the range of data for start values
@@ -136,14 +135,15 @@ pt_curve <- function(pt, id_var, type = NULL, k = NULL, group_var = NULL, n_star
 
     if(pt_dat_i$q[pt_dat_i$c==prices[1]]==0 | pt_dat_i$q[pt_dat_i$c==prices[2]]==0){
       dat_i <- data.frame(id = id_num, q0 = NA, alpha = NA, pmax = NA)
-    }
-   else if(pt_dat_i$q[pt_dat_i$c==prices[1]]!=0 & pt_dat_i$q[pt_dat_i$c==prices[2]]!=0){
+    } else if(pt_dat_i$q[pt_dat_i$c==prices[1]]!=0 & pt_dat_i$q[pt_dat_i$c==prices[2]]!=0){
 
       pmax_i <- min(pt_dat_i$c[pt_dat_i$expenditure==pt_dat_i$omax])
       pmax_i <- ifelse(pmax_i==0,zero_conv,pmax_i)
 
       q0_i <- pt_dat_i$q[pt_dat_i$c==min(pt_dat_i$c)]
-      alpha_i <- -(pracma::lambertWp(-(1/log(10^kval))))/(q0_i*pmax_i)
+      lambert_i <- -(1/log(10^kval))
+      lambert_i[lambert_i<(-1/exp(1))] <- -1/exp(1) ## In case of a low k-value, the Lambert W function will not be defined, thus set as lowest defined value
+      alpha_i <- -(pracma::lambertWp(lambert_i))/(q0_i*pmax_i)
 
       dat_i <- data.frame(id = id_num, q0 = q0_i, alpha = alpha_i, pmax = pmax_i)
 
@@ -157,9 +157,11 @@ pt_curve <- function(pt, id_var, type = NULL, k = NULL, group_var = NULL, n_star
   q0_by <- (min(pt_all$q0[pt_all$q0!= q0_minmax[1]])-q0_minmax[1])
   q0_range <- seq(q0_minmax[1],q0_minmax[2], by = q0_by)
   alpha_minmax <- c(min(pt_all$alpha),max(pt_all$alpha))
-  alpha_by <- 10^(log10(10^ceiling(log10(min(pt_all$alpha[pt_all$alpha!= alpha_minmax[1]])-alpha_minmax[1]))))*10
-  alpha_by[alpha_by<1e-7] <- 1e-7 ## Avoid excessively small "by" values
-  alpha_range <- seq(alpha_minmax[1]-(alpha_by*(n_starts/2)),alpha_minmax[2]+(alpha_by*(n_starts/2)), by = alpha_by)
+  alpha_by <- 10^(log10(10^ceiling(log10(min(pt_all$alpha[pt_all$alpha!= alpha_minmax[1]])-alpha_minmax[1]))))*50
+  alpha_by[alpha_by<1e-7] <- 1e-7 ## Avoid error of excessively small "by" values
+  ## MIN: Can't do alpha_minmax[1]-(alpha_by*n_starts) as it may result in negative values
+  ## MAX: Using alpha_minmax[2]+(alpha_by*(n_starts/2))
+  alpha_range <- seq(alpha_minmax[1],alpha_minmax[2]+(alpha_by*(n_starts)/2), by = alpha_by)
 
   ##### ----- OVERALL ELASTICITY
 
@@ -174,7 +176,9 @@ pt_curve <- function(pt, id_var, type = NULL, k = NULL, group_var = NULL, n_star
     pmax_emp <- pt_mean$c[pt_mean$expenditure==pt_mean$omax]
 
     q0_start <- pt_mean$q[pt_mean$c==min(pt_mean$c)]
-    alpha_start <- -(pracma::lambertWp(-(1/log(10^kval))))/(q0_start*pmax_emp)
+    lambert_val <- -(1/log(10^kval))
+    lambert_val[lambert_val<(-1/exp(1))] <- -1/exp(1) ## In case of a low k-value, the Lambert W function will not be defined, thus set as lowest defined value
+    alpha_start <- -(pracma::lambertWp(lambert_val))/(q0_start*pmax_emp)
 
     pt_mod_mean <- stats::nls(equation, data = pt_mean, start = list(q0 = q0_start, alpha = alpha_start), control = stats::nls.control(maxiter = 500))
 
@@ -229,13 +233,12 @@ pt_curve <- function(pt, id_var, type = NULL, k = NULL, group_var = NULL, n_star
     ##### ----- GROUP ELASTICITY
 
   } else if(type == "group"){
+
   ### grab mean values of y for every price (x) by group; then calculate max value minus min value
 
   pt_group_mean <- stats::aggregate(pt_long[c("q")], list(c = pt_long[,"c"], group = pt_long[,"group"]), function(x) mean(x, na.rm = T))
 
   pt_group_mean$group <- as.factor(pt_group_mean$group)
-  # pt_group_mean$expenditure <- pt_group_mean$c*pt_group_mean$q
-  # pt_group_mean$omax <- max(pt_group_mean$expenditure)
 
   ### Create loop for each group
 
@@ -255,7 +258,9 @@ pt_curve <- function(pt, id_var, type = NULL, k = NULL, group_var = NULL, n_star
     pmax_emp_g <- min(pt_g$c[pt_g$expenditure==pt_g$omax])
 
     q0_start_g <- pt_g$q[pt_g$c==min(pt_g$c)]
-    alpha_start_g <- -(pracma::lambertWp(-(1/log(10^kval))))/(q0_start_g*pmax_emp_g)
+    lambert_val_g <- -(1/log(10^kval))
+    lambert_val_g[lambert_val_g<(-1/exp(1))] <- -1/exp(1) ## In case of a low k-value, the Lambert W function will not be defined, thus set as lowest defined value
+    alpha_start_g <- -(pracma::lambertWp(lambert_val_g))/(q0_start_g*pmax_emp_g)
 
     pt_mod_g <- stats::nls(equation, data = pt_g, start = list(q0 = q0_start_g,alpha = alpha_start_g), control = stats::nls.control(maxiter = 500))
 
@@ -321,7 +326,7 @@ pt_curve <- function(pt, id_var, type = NULL, k = NULL, group_var = NULL, n_star
                      legend.text = ggplot2::element_text(size = 15, vjust = 0.5)) +
       ggplot2::guides(colour = ggplot2::guide_legend(title = group_var, override.aes = list(alpha = 1, linewidth = 5)))
 
-    if(length(group_uniq)<=5){
+    if(length(group_uniq)<=3){
       pt_plot <- pt_plot + ggplot2::scale_colour_manual(values = c("#3E668E","#8E3E3E","#66526E"))
     }
 
@@ -337,6 +342,8 @@ pt_curve <- function(pt, id_var, type = NULL, k = NULL, group_var = NULL, n_star
 
     pt_elast <- data.frame(id = NULL, q0 = NULL, alpha = NULL, unit_elast = NULL, r2 = NULL)
 
+    exact.start.id <- {}
+
     for(id_num in pt$id){
 
       pt_i <- pt_long[(pt_long$id == id_num),]
@@ -347,7 +354,9 @@ pt_curve <- function(pt, id_var, type = NULL, k = NULL, group_var = NULL, n_star
       pmax_emp_i <- min(pt_i$c[pt_i$expenditure==pt_i$omax])
 
       q0_start_i <- pt_i$q[pt_i$c==min(pt_i$c)]
-      alpha_start_i <- -(pracma::lambertWp(-(1/log(10^kval))))/(q0_start_i*pmax_emp_i)
+      lambert_val_i <- -(1/log(10^kval))
+      lambert_val_i[lambert_val_i<(-1/exp(1))] <- -1/exp(1) ## In case of a low k-value, the Lambert W function will not be defined, thus set as lowest defined value
+      alpha_start_i <- -(pracma::lambertWp(lambert_val_i))/(q0_start_i*pmax_emp_i)
 
       ## Convert any zero values in the first two price points to NA as they will not be adequately fit
       ### could modify and calculate, then user can decide if they want to remove these estimates
@@ -359,30 +368,46 @@ pt_curve <- function(pt, id_var, type = NULL, k = NULL, group_var = NULL, n_star
       } else if(pt_i$q[pt_i$c==prices[1]]!=0 & pt_i$q[pt_i$c==prices[2]]!=0){
 
         ### Need to feed coefficients that fit for the nls2 to the nls to get actual useful estimates
-        ### because grid-search will use the exact start value fed to the algorithm (same as brute-force).
+        ### because grid-search will use the exact start value fed to the algorithm (identical to brute-force).
 
-        alpha_mean_i_pos <- which.min(abs(alpha_range-alpha_start_i))
+        alpha_mean_i_pos <- which.min(abs(alpha_range-alpha_start_i)) ## closest starting value in alpha_range
 
-        alpha_range_i <- c(alpha_range[(alpha_mean_i_pos-n_starts/2):(alpha_mean_i_pos+n_starts/2)])
+        ### Numbers on the left and right of the mean position of alpha_mean_i_pos adjusting for min or max reached
+        a_pos_left <- ifelse(alpha_mean_i_pos-(n_starts/2)<1,1,alpha_mean_i_pos-(n_starts/2))
+        a_pos_right <- ifelse(alpha_mean_i_pos+(n_starts/2)>length(alpha_range),length(alpha_range),alpha_mean_i_pos+(n_starts/2))
+        a_pos_left[alpha_mean_i_pos+(n_starts/2)>length(alpha_range)] <- a_pos_left-((n_starts/2)-(length(alpha_range)-alpha_mean_i_pos))
+        a_pos_right[a_pos_left==1] <- a_pos_right+((n_starts/2)-alpha_mean_i_pos)
 
-        ### Final start values for individual
-        start_val_i <- data.frame(q0 = c(rep(q0_start_i,length(alpha_range_i))), alpha = c(alpha_range_i))
+        alpha_range_i <- c(alpha_range[a_pos_left:a_pos_right])
 
-        ### suppress errors here
-        mess_nls2 <- utils::capture.output(type = "message",
-          pt_mod_start_i <- try(nls2::nls2(equation, data = pt_i, start = start_val_i,
-                               algorithm = "grid-search", control = stats::nls.control(maxiter = 100)),
-                               silent = TRUE))
+        ### Final start values for individual if needing to force convergence
+        ### Two other Q0 are provided as those with sustained demand at the beginning tend to have higher estimated Q0;
+        ### and those with rapidly decreasing demand at the beginning tend to have lower estimated Q0
+        ### Thus 25% lower and 25% higher than empirical Q0 will be tested
+        start_val_i <- data.frame(q0 = c(rep(q0_start_i,length(alpha_range_i)),
+                                         rep(q0_start_i*0.75,length(alpha_range_i)),
+                                         rep(q0_start_i*1.25,length(alpha_range_i))),
+                                  alpha = c(rep(c(alpha_range_i),3)))
+
+        pt_mod_start_i <- NULL
+
+        ### suppress errors when running models
+        mess_nls2a <- utils::capture.output(type = "message", ## see if model will converge on its own (coefficients will be used as final starting values)
+          pt_mod_start_i <- try(nls2::nls2(equation, data = pt_i, start = c("alpha" = alpha_start_i,"q0" = q0_start_i)), silent = TRUE))
+
+        if(inherits(pt_mod_start_i,"try-error")){
+          mess_nls2b <- utils::capture.output(type = "message", ## if the above model does not converge, then force it to (coefficients will be used as final starting values)
+            pt_mod_start_i <- try(nls2::nls2(equation, data = pt_i, start = start_val_i, algorithm = "grid-search"), silent = TRUE))
+
+        }
 
         while(TRUE){
 
           pt_mod_i <- NULL
 
-          try(pt_mod_i <- stats::nls(equation, data = pt_i, start = stats::coef(pt_mod_start_i),control = stats::nls.control(maxiter = 500)), silent = TRUE); # does not stop in the case of error
+          try(pt_mod_i <- stats::nls(equation, data = pt_i, start = stats::coef(pt_mod_start_i), control = stats::nls.control(maxiter = 500)), silent = TRUE); # does not stop in the case of error
 
-          if(is.null(pt_mod_i) & id_diagnose==FALSE) stop(rlang::format_error_bullets(c(x = "Increase Number of Starts using the `n_starts` argument.")), call. = FALSE);
-          if(is.null(pt_mod_i) & id_diagnose==TRUE) stop(rlang::format_error_bullets(c(x = "Increase Number of Starts using the `n_starts` argument.",
-                                                                                       "!" = paste0("Stopped on ID ",id_num,". Inspect for nonsystematic data."))), call. = FALSE);
+          if(is.null(pt_mod_i)) stop(rlang::format_error_bullets(c(x = "Increase Number of Starts using the `n_starts` argument.")), call. = FALSE);
 
           if(!is.null(pt_mod_i))break; ### Quit from loop if NLS works
 

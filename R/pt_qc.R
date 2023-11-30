@@ -79,7 +79,7 @@ pt_qc <- function(pt, id_var, type = NULL, delta_q = 0.025, bounce_type = "both"
   prices <- names(pt)[names(pt)!=id_var]
   names(pt)[names(pt) == id_var] <- "id"
 
-  remove.id.trend = {}
+  remove.id.trend <- {}
   remove.id.bounce <- {}
   remove.id.reversal <- {}
 

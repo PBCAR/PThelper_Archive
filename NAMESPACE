@@ -3,6 +3,7 @@
 export(plot_summary)
 export(plot_transform)
 export(price_prep)
+export(pt_auc)
 export(pt_corr)
 export(pt_curve)
 export(pt_empirical)
