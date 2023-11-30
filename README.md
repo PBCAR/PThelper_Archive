@@ -6,7 +6,7 @@ a) greater customization regarding quality control and processing;
 
 b) the ability to process fully- and partially-administered^1 purchase tasks (the latter being administered as an array or until zero consumption is reached)
 
-c) additional functions have been added such as summary descriptives and correlation functions; and
+c) additional functions have been added such as summary descriptives, correlation functions, and ability to calculate area under the curve (AUC); and
 
 d) the package calculates the empirical purchase task indicators as well as alpha and derived intensity internally.
 
@@ -56,6 +56,8 @@ Unit Elasticity (derived) -- The price associated with unit elasticity (aligns w
 Alpha (derived) -- Rate of change constant in consumption relative to price
 
 Eta (derived) -- The % decrease in consumption associated with a 1% increase in price
+
+AUC -- Proportion of area under the empirical demand curve reflecting total consumption across all prices
 
 ## i) Pre-Processing
 
@@ -203,6 +205,16 @@ The fitted demand curve will also be printed to the 'Plots' pane:
 
 ![](examples/pt_linear_ex.png)
 
+### pt_auc()
+
+This function can be used to calculate the area under the curve (AUC), as outlined in Amlung et al., (2015).
+
+```
+pt_auc(pt3$data, id_var = "ID", type = "overall", qmax = 99)
+```
+
+![](examples/pt_auc_ex.png)
+
 ### pt_empirical()
 
 This function can be used to calculate the empirical values such as Intensity, Breakpoint, Omax, and Pmax.
@@ -242,6 +254,8 @@ This function will provide pairwise Pearson correlation coefficients and p-value
 ![](examples/pt_corr_ex.png)
 
 ## References
+
+Amlung, M., Yurasek, A., McCarty, K. N., MacKillop, J., & Murphy, J. G. (2015). Area under the curve as a novel metric of behavioral economic demand for alcohol. Experimental and clinical psychopharmacology, 23(3), 168–175. https://doi.org/10.1037/pha0000014
 
 Bickel, Warren K, David P Jarmolowicz, E Terry Mueller, and Kirstin M Gatchalian. (2011). "The Behavioral Economics and Neuroeconomics of Reinforcer Pathologies: Implications for Etiology and Treatment of Addiction." Current Psychiatry Reports 13 (5): 406--15.
 
