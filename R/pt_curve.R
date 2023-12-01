@@ -28,6 +28,9 @@ utils::globalVariables(c("id","kval","pred","alpha","q0","pmax","rsquared","pred
 #' at the highest price point is 0, the lowest non-zero mean consumption is used.
 #' @param group_var The name of the grouping variable when `type` equals "group".
 #' @param n_starts The number of starting values of alpha to use for fitting the demand curve when `type` equals "individual". The default is 10.
+#' @param id_diagnose Whether to identify the first ID number that could not have an individual demand curve successfully fit when `type` equals "individual".
+#' The default is FALSE. Depending on the type of quality control constraints, non-systematic data could still exist, which will cause errors in curve
+#' fitting regardless of the number of `n_starts` used.
 #' @examples
 #'
 #' ### --- Load Data
@@ -46,7 +49,7 @@ utils::globalVariables(c("id","kval","pred","alpha","q0","pmax","rsquared","pred
 #' @return A ggplot2 graphical object; For `type` "individual", the original pt data frame plus the derived values for each individual is returned.
 #' @export
 
-pt_curve <- function(pt, id_var, type = NULL, k = NULL, group_var = NULL, n_starts = 10) {
+pt_curve <- function(pt, id_var, type = NULL, k = NULL, group_var = NULL, n_starts = 10, id_diagnose = FALSE) {
 
   if(is.null(type)) stop(rlang::format_error_bullets(c( "!" = c("Type required. Please select one of c('overall','group','individual') using the 'type' argument."))), call. = FALSE)
   if(!is.data.frame(pt)) stop(rlang::format_error_bullets(c( x = c("'pt' must be a data frame."))), call. = FALSE)
@@ -115,7 +118,8 @@ pt_curve <- function(pt, id_var, type = NULL, k = NULL, group_var = NULL, n_star
 
   if(kval<(exp(1)/log(10))){
     message(rlang::format_error_bullets(c(i = "When k is < `exp(1)/log(10)`, the price associated with maximum consumption does not reach unit elasticity")))
-}
+  }
+
   equation <- "q ~ q0 * 10^(k * (exp(-alpha * q0 * c)-1))"
 
   ### Grab the range of data for start values
@@ -157,7 +161,7 @@ pt_curve <- function(pt, id_var, type = NULL, k = NULL, group_var = NULL, n_star
   q0_by <- (min(pt_all$q0[pt_all$q0!= q0_minmax[1]])-q0_minmax[1])
   q0_range <- seq(q0_minmax[1],q0_minmax[2], by = q0_by)
   alpha_minmax <- c(min(pt_all$alpha),max(pt_all$alpha))
-  alpha_by <- 10^(log10(10^ceiling(log10(min(pt_all$alpha[pt_all$alpha!= alpha_minmax[1]])-alpha_minmax[1]))))*50
+  alpha_by <- (alpha_minmax[2]-alpha_minmax[1])/1000
   alpha_by[alpha_by<1e-7] <- 1e-7 ## Avoid error of excessively small "by" values
   ## MIN: Can't do alpha_minmax[1]-(alpha_by*n_starts) as it may result in negative values
   ## MAX: Using alpha_minmax[2]+(alpha_by*(n_starts/2))
@@ -342,8 +346,6 @@ pt_curve <- function(pt, id_var, type = NULL, k = NULL, group_var = NULL, n_star
 
     pt_elast <- data.frame(id = NULL, q0 = NULL, alpha = NULL, unit_elast = NULL, r2 = NULL)
 
-    exact.start.id <- {}
-
     for(id_num in pt$id){
 
       pt_i <- pt_long[(pt_long$id == id_num),]
@@ -383,17 +385,19 @@ pt_curve <- function(pt, id_var, type = NULL, k = NULL, group_var = NULL, n_star
         ### Final start values for individual if needing to force convergence
         ### Two other Q0 are provided as those with sustained demand at the beginning tend to have higher estimated Q0;
         ### and those with rapidly decreasing demand at the beginning tend to have lower estimated Q0
-        ### Thus 25% lower and 25% higher than empirical Q0 will be tested
-        start_val_i <- data.frame(q0 = c(rep(q0_start_i,length(alpha_range_i)),
-                                         rep(q0_start_i*0.75,length(alpha_range_i)),
-                                         rep(q0_start_i*1.25,length(alpha_range_i))),
-                                  alpha = c(rep(c(alpha_range_i),3)))
+        ### Thus 10% and 25% lower, and 10% 25% higher than empirical Q0 will be tested
+        start_val_i <- data.frame("q0" = c(rep(q0_start_i,length(alpha_range_i)),
+                                           rep(q0_start_i*0.75,length(alpha_range_i)),
+                                           rep(q0_start_i*0.90,length(alpha_range_i)),
+                                           rep(q0_start_i*1.10,length(alpha_range_i)),
+                                           rep(q0_start_i*1.25,length(alpha_range_i))),
+                                  "alpha" = c(rep(c(alpha_range_i),5)))
 
         pt_mod_start_i <- NULL
 
         ### suppress errors when running models
         mess_nls2a <- utils::capture.output(type = "message", ## see if model will converge on its own (coefficients will be used as final starting values)
-          pt_mod_start_i <- try(nls2::nls2(equation, data = pt_i, start = c("alpha" = alpha_start_i,"q0" = q0_start_i)), silent = TRUE))
+          pt_mod_start_i <- try(nls2::nls2(equation, data = pt_i, start = c("q0" = q0_start_i,"alpha" = alpha_start_i)), silent = TRUE))
 
         if(inherits(pt_mod_start_i,"try-error")){
           mess_nls2b <- utils::capture.output(type = "message", ## if the above model does not converge, then force it to (coefficients will be used as final starting values)
@@ -407,7 +411,9 @@ pt_curve <- function(pt, id_var, type = NULL, k = NULL, group_var = NULL, n_star
 
           try(pt_mod_i <- stats::nls(equation, data = pt_i, start = stats::coef(pt_mod_start_i), control = stats::nls.control(maxiter = 500)), silent = TRUE); # does not stop in the case of error
 
-          if(is.null(pt_mod_i)) stop(rlang::format_error_bullets(c(x = "Increase Number of Starts using the `n_starts` argument.")), call. = FALSE);
+          if(is.null(pt_mod_i) & id_diagnose==FALSE) stop(rlang::format_error_bullets(c(x = "Increase Number of Starts using the `n_starts` argument.")), call. = FALSE);
+          if(is.null(pt_mod_i) & id_diagnose==TRUE) stop(rlang::format_error_bullets(c(x = "Increase Number of Starts using the `n_starts` argument.",
+                                                                                       "!" = paste0("Stopped on ID ",id_num,". Inspect for nonsystematic data."))), call. = FALSE);
 
           if(!is.null(pt_mod_i))break; ### Quit from loop if NLS works
 
