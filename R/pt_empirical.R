@@ -67,6 +67,8 @@ pt_empirical <- function(pt, id_var){
 
     pmax_i <- max(pt_dat_i$c[pt_dat_i$expenditure==omax_i])
 
+    pmax_i[omax_i==0] <- 0 ## previous uses of min price above meant this line of code wasn't needed.
+
     dat_i <- data.frame(id = id_num, omax = omax_i, pmax = pmax_i)
 
     pt_all <- rbind(pt_all,dat_i)
