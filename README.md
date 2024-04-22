@@ -1,8 +1,8 @@
 [![R-CMD-check](https://github.com/PBCAR/PThelper/actions/workflows/r_check_standard.yml/badge.svg)](https://github.com/PBCAR/PThelper/actions/workflows/r_check_standard.yml) [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.7713050.svg)](https://doi.org/10.5281/zenodo.7713050)
 
-## !! PThelper < version 3.0.0 is ARCHIVED as of April 2024 !!
+## !! PThelper < version 0.3.0 is ARCHIVED as of April 2024 !!
 
-This repository of the PThelper has been archived on April 21st, 2024, as a new repository with numerous improvements to the PThelper package have been made ahead of submission to CRAN. The updated PThelper (version 3.0.0 can be found [here](https://github.com/PBCAR/PThelper)).
+This repository of the PThelper has been archived on April 21st, 2024, as a new repository with numerous improvements to the PThelper package have been made ahead of submission to CRAN. The updated PThelper (version 0.3.0 can be found [here](https://github.com/PBCAR/PThelper)).
 
 ## Installation
 
