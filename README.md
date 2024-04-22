@@ -1,14 +1,17 @@
 [![R-CMD-check](https://github.com/PBCAR/PThelper/actions/workflows/r_check_standard.yml/badge.svg)](https://github.com/PBCAR/PThelper/actions/workflows/r_check_standard.yml) [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.7713050.svg)](https://doi.org/10.5281/zenodo.7713050)
 
-## !! Updates for 2023 !!
+## !! PThelper < version 3.0.0 is ARCHIVED as of April 2024 !!
 
-This package is currently undergoing a transformation in a few key ways prior to being submitted to CRAN. These package changes can be found in the [pt2023](https://github.com/PBCAR/PThelper/tree/pt2023) branch of GitHub. To install from this branch:
+This repository of the PThelper has been archived on April 21st, 2024, as a new repository with numerous improvements to the PThelper package have been made ahead of submission to CRAN. The updated PThelper (version 3.0.0 can be found [here](https://github.com/PBCAR/PThelper)).
+
+## Installation
+
+To install the archived version of the {PThelper} package, use the {devtools} package to download directly from this GitHub repository:
 
 ```
-devtools::install_github("PBCAR/PThelper", ref = "pt2023")
+devtools::install_github("PBCAR/PThelper_Archive") ## USE the ref = argument to install a branch other than the main one
 ```
 
-First of all, the utility of the existing functions are being altered to provide additional processing capabilities and information for reproducibility purposes. Second, the quality control function (`pt_qc()`) can now process two different types of purchase tasks: i) fully-administered purchase tasks; and ii) purchase tasks administered as an array or only until zero consumption is reached. Third, additional functions have been added such as a summary function (`pt_summary()`) and a correlation function (`pt_corr()`). Fourth, the package calculates the empirical purchase task indicators as well as elasticity and derived intensity internally without the use of external packages.
 
 # The {PThelper} Package
 
